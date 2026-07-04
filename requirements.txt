@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+pydantic-settings
+passlib[bcrypt]
+pyjwt
+python-multipart
+python-dotenv
+
+# Testing
+pytest
+httpx
