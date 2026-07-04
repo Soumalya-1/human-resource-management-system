@@ -18,20 +18,7 @@ const Input = ({
         value={value}
         onChange={onChange}
         required={required}
-        className="
-          w-full
-          rounded-xl
-          border
-          border-gray-300
-          px-4
-          py-3
-          outline-none
-          transition
-          duration-200
-          focus:border-purple-500
-          focus:ring-2
-          focus:ring-purple-300
-        "
+        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
       />
     </div>
   );

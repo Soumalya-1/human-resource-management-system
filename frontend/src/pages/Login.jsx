@@ -1,5 +1,6 @@
 import Input from "../components/Input";
 import Button from "../components/Button";
+import { Link } from "react-router-dom";
 
 function Login() {
   return (
@@ -37,6 +38,15 @@ function Login() {
         <Button>
           Sign In
         </Button>
+
+        <div className="text-center mt-5">
+  <Link
+    to="/signup"
+    className="text-indigo-600 hover:underline"
+  >
+    Don't have an account? Sign Up
+  </Link>
+</div>
 
         <div className="text-center mt-6">
 
