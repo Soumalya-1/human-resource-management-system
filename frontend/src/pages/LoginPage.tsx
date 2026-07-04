@@ -4,15 +4,33 @@ import { User, Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react"
 import { AuthLayout } from "@/components/auth/AuthLayout"
 import { Input } from "@/components/ui/Input"
 import { Button } from "@/components/ui/Button"
+import { login } from "@/lib/api"
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [role, setRole] = useState<"admin" | "employee">("admin")
+  const [email, setEmail] = useState("demo@nimbus.co")
+  const [password, setPassword] = useState("Aa123456")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    navigate(role === "admin" ? "/admin" : "/employee")
+    setError(null)
+    setLoading(true)
+    try {
+      const res = await login(email, password, role)
+      // Navigate based on returned role or chosen role (fallback to chosen)
+      const targetRole = (res.role || role) === "admin" ? "admin" : "employee"
+      navigate(targetRole === "admin" ? "/admin" : "/employee")
+    } catch (err: any) {
+      setError(err?.message || "Login failed. Using demo mode.")
+      // Still allow demo navigation
+      navigate(role === "admin" ? "/admin" : "/employee")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -38,11 +56,12 @@ export default function LoginPage() {
 
         <Input
           id="loginId"
-          label="Login ID"
+          label="Login ID / Email"
           type="text"
           placeholder="you@nimbus.co"
           icon={<User className="h-4 w-4" />}
-          defaultValue="demo@nimbus.co"
+          value={email}
+          onChange={(e: any) => setEmail(e.target.value)}
           required
         />
 
@@ -52,7 +71,8 @@ export default function LoginPage() {
           type={showPassword ? "text" : "password"}
           placeholder="Enter your password"
           icon={<Lock className="h-4 w-4" />}
-          defaultValue="password"
+          value={password}
+          onChange={(e: any) => setPassword(e.target.value)}
           required
         />
 
@@ -66,14 +86,16 @@ export default function LoginPage() {
           </button>
         </div>
 
-        <Button type="submit" size="lg" className="w-full">
-          Sign In
+        {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
+
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+          {loading ? "Signing in..." : "Sign In"}
           <ArrowRight className="h-4 w-4" />
         </Button>
 
         <div className="flex items-center gap-2 rounded-xl bg-[var(--color-primary-soft)] p-3 text-xs text-primary">
           <ShieldCheck className="h-4 w-4 shrink-0" />
-          Demo mode — pick a role above and sign in with any credentials.
+          Works with real backend or demo mode (any password).
         </div>
       </form>
 

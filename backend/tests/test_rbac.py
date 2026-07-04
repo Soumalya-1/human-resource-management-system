@@ -1,4 +1,4 @@
-from conftest import client, auth_header, create_user, get_token
+from tests.conftest import client, auth_header, create_user, get_token
 
 def test_non_admin_cannot_access_admin_routes(create_user, get_token):
     emp = create_user("noadmin@rev.com", "Aa123456", role="Employee")

@@ -1,4 +1,4 @@
-from conftest import client, auth_header, create_user, get_token
+from tests.conftest import client, auth_header, create_user, get_token
 
 def test_employee_can_update_own_limited_fields(create_user, get_token):
     emp = create_user("emp@rev.com", "Aa123456", role="Employee", name="Emp")

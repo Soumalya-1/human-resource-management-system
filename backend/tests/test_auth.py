@@ -1,9 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
-from conftest import client, auth_header, create_user, get_token
+from tests.conftest import client, auth_header, create_user, get_token
 
-def test_signup_generates_employee_id_and_first_is_admin(create_user, get_token):
-    # Fresh DB, first signup should become Admin
+def test_signup_generates_employee_id_and_first_is_admin():
+    # Fresh DB (cleared by autouse _clear_db), first signup via API should become Admin
     resp = client.post("/api/auth/signup", json={
         "email": "first@rev.com",
         "password": "Aa123456",

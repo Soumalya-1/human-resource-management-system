@@ -1,4 +1,4 @@
-from conftest import client, auth_header, create_user, get_token
+from tests.conftest import client, auth_header, create_user, get_token
 from datetime import datetime, timedelta
 
 def test_check_in_and_check_out_flow(create_user, get_token):

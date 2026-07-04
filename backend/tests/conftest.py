@@ -7,17 +7,21 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# --- Critical: make backend/app importable as top-level for tests ---
-app_dir = str(Path(__file__).parent.parent / "app")
-if app_dir not in sys.path:
-    sys.path.insert(0, app_dir)
+# Make the backend/ directory importable so "app" package works
+# and make the repo root importable so "from tests.conftest" works in test files
+backend_dir = str(Path(__file__).parent.parent)
+root_dir = str(Path(__file__).parent.parent.parent)
 
-# Use a fresh in-memory SQLite for tests (MUST be before any app import)
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+for p in (backend_dir, root_dir):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
-from database import Base, get_db
-from main import app
-import models
+# MUST set DATABASE_URL before importing any app code
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+
+from app.database import Base, get_db
+from app.main import app
+from app import models
 
 # Create a single engine for the test session
 engine = create_engine(
@@ -39,7 +43,30 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 
-client = TestClient(app)
+# Per-test cleanup for isolation (first-user Admin logic, no email collisions across tests, etc.)
+@pytest.fixture(autouse=True)
+def _clear_db():
+    db = TestingSessionLocal()
+    try:
+        db.query(models.Attendance).delete()
+        db.query(models.Leave).delete()
+        db.query(models.Payroll).delete()
+        db.query(models.User).delete()
+        db.commit()
+    finally:
+        db.close()
+    yield
+
+# Create the TestClient instance once
+_client_instance = TestClient(app)
+
+# Register fixture under the name "client" (using name= so python name can differ)
+@pytest.fixture(scope="module", name="client")
+def client_fixture():
+    return _client_instance
+
+# Bind instance to module name for `from tests.conftest import client` (used by most tests)
+client = _client_instance
 
 @pytest.fixture(scope="function")
 def db_session():
@@ -53,13 +80,13 @@ def db_session():
 @pytest.fixture(scope="function")
 def create_user(db_session):
     def _create(email: str, password: str, role: str = "Employee", name: str = "Test User"):
-        from utils import generate_next_employee_id
-        # Ensure first user logic can be tested by allowing explicit role
+        from app.utils import generate_next_employee_id
+        from app import auth as auth_module
         emp_id = generate_next_employee_id(db_session)
         user = models.User(
             employee_id=emp_id,
             email=email,
-            hashed_password=__import__("auth").get_password_hash(password),
+            hashed_password=auth_module.get_password_hash(password),
             role=role,
             name=name,
             verified=True

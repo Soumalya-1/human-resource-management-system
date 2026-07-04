@@ -1,4 +1,4 @@
-from conftest import client, auth_header, create_user, get_token
+from tests.conftest import client, auth_header, create_user, get_token
 
 def test_employee_can_view_own_payroll_null_or_set(create_user, get_token):
     emp = create_user("py@rev.com", "Aa123456")

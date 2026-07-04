@@ -4,20 +4,40 @@ import { Building2, User, Mail, Phone, Lock, ImagePlus, ArrowRight } from "lucid
 import { AuthLayout } from "@/components/auth/AuthLayout"
 import { Input } from "@/components/ui/Input"
 import { Button } from "@/components/ui/Button"
+import { apiSignup } from "@/lib/api"
 
 export default function SignUpPage() {
   const navigate = useNavigate()
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   function handleLogo(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) setLogoPreview(URL.createObjectURL(file))
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    navigate("/admin")
+    setError(null)
+    setLoading(true)
+    const form = e.currentTarget as HTMLFormElement
+    const email = (form.querySelector('#email') as HTMLInputElement)?.value || 'new@rev.com'
+    const name = (form.querySelector('#employee') as HTMLInputElement)?.value || 'New User'
+    const pass = (form.querySelector('#pass') as HTMLInputElement)?.value || 'Aa123456'
+
+    try {
+      await apiSignup({ email, password: pass, name })
+      // Default new signups to employee view for demo
+      navigate("/employee")
+    } catch (err: any) {
+      // Still allow flow in mock mode
+      setError(err?.message || "Signup attempted (demo mode).")
+      navigate("/employee")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

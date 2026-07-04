@@ -1,4 +1,4 @@
-from conftest import client, auth_header, create_user, get_token
+from tests.conftest import client, auth_header, create_user, get_token
 from datetime import date, timedelta
 
 def test_apply_leave_and_view(create_user, get_token):

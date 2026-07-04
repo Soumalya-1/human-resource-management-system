@@ -5,6 +5,7 @@ import { LeaveBalance } from "@/components/employee/LeaveBalance"
 import { CalendarCard } from "@/components/employee/CalendarCard"
 import { Notifications } from "@/components/employee/Notifications"
 import { RecentActivity } from "@/components/employee/RecentActivity"
+import { LeaveRequestForm } from "@/components/employee/LeaveRequestForm"
 import { currentEmployee } from "@/data/hrms"
 
 export default function EmployeeDashboard() {
@@ -44,7 +45,11 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        <RecentActivity />
+        {/* Live action: Request Leave (calls real API or mock) */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <LeaveRequestForm />
+          <RecentActivity />
+        </div>
       </div>
     </DashboardLayout>
   )
