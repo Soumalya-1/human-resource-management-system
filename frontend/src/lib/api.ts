@@ -162,3 +162,21 @@ export async function checkOut() {
 export async function applyLeave(payload: any) {
   try { return await apiApplyLeave(payload); } catch { return await mockApplyLeave(payload); }
 }
+
+// Add these to the bottom of frontend/src/lib/api.ts
+
+export async function apiGetUsers() {
+  return request('/api/admin/users');
+}
+
+export async function getUsers() {
+  try {
+    return await apiGetUsers();
+  } catch {
+    // Fallback mock users if backend is ever disconnected
+    return [
+      { id: 1, employee_id: "REVE000001", name: "Sofia Rossi", job_title: "Product Designer", email: "sofia@nimbus.co", role: "HR" },
+      { id: 2, employee_id: "REVE000002", name: "James Whitfield", job_title: "Backend Engineer", email: "james@nimbus.co", role: "Employee" }
+    ];
+  }
+}

@@ -2,14 +2,15 @@ import { Mail, Phone, MapPin, User2, Building2 } from "lucide-react"
 import { Card } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
 import { Avatar } from "@/components/ui/Avatar"
-import { currentEmployee } from "@/data/hrms"
 
-export function ProfileCard() {
+// Accept the 'user' prop from the dashboard
+export function ProfileCard({ user }: { user: any }) {
+  // Map the real FastAPI data
   const rows = [
-    { icon: Mail, label: "Email", value: currentEmployee.email },
-    { icon: Phone, label: "Phone", value: currentEmployee.phone },
-    { icon: MapPin, label: "Location", value: currentEmployee.location },
-    { icon: User2, label: "Manager", value: currentEmployee.manager },
+    { icon: Mail, label: "Email", value: user?.email || "N/A" },
+    { icon: Phone, label: "Phone", value: user?.phone || "Not provided" },
+    { icon: MapPin, label: "Address", value: user?.address || "Not provided" },
+    { icon: User2, label: "Employee ID", value: user?.employee_id || "N/A" },
   ]
 
   return (
@@ -17,21 +18,26 @@ export function ProfileCard() {
       <div className="h-20 bg-primary" />
       <div className="px-5 pb-5">
         <div className="-mt-10 flex items-end gap-4">
-          <Avatar src={currentEmployee.avatar} name={currentEmployee.name} size="xl" className="ring-4 ring-card" />
+          <Avatar
+            src={user?.profile_picture}
+            name={user?.name || "User"}
+            size="xl"
+            className="ring-4 ring-card bg-white"
+          />
           <div className="pb-1">
             <Badge tone="success">Active</Badge>
           </div>
         </div>
         <div className="mt-3">
-          <h2 className="text-lg font-semibold text-foreground">{currentEmployee.name}</h2>
-          <p className="text-sm text-muted-foreground">{currentEmployee.role}</p>
+          <h2 className="text-lg font-semibold text-foreground">{user?.name}</h2>
+          <p className="text-sm text-muted-foreground">{user?.job_title || user?.role}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Building2 className="h-3.5 w-3.5" />
-              {currentEmployee.department}
+              HQ Office
             </span>
             <span className="text-border">·</span>
-            <span>ID {currentEmployee.employeeId}</span>
+            <span>ID: {user?.employee_id}</span>
           </div>
         </div>
 

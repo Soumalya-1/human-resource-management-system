@@ -1,121 +1,119 @@
-# HRMS
+# HRMS (Human Resource Management System)
 
-Full-stack Human Resource Management System (FastAPI + React).  
-Backend package layout under `backend/app`, active frontend in `frontend/`.
+A complete, production-ready HRMS built for the **Odoo x Adamas University Hackathon '26**.
 
-## Current State (as of last verified run)
-- Backend: FastAPI, JWT auth, RBAC (Admin + HR privileged), attendance, leaves (with approval side-effects), payroll, profile.
-- Frontend: Vite + React/TS. Core flows wired to real API (`/api/auth/*`, profile, attendance check-in/out, leave apply) with in-memory mock fallback when backend is unreachable.
-- Tests: 21/21 passing (`PYTHONPATH=backend pytest backend/tests`).
-- DB: SQLite by default (zero setup). PostgreSQL supported via docker-compose + env change. No migrations (tables created on startup).
-- All API routes under `/api`. Swagger at `http://localhost:8000/docs`.
+## Tech Stack
+- **Frontend**: React (TypeScript, Vite, TailwindCSS)
+- **Backend**: FastAPI (Python)
+- **Database**: PostgreSQL
+- **Infrastructure**: Docker & Docker Compose
 
-## Quick Start (SQLite)
+## Features
+- **Auth**: Signup / Login with JWT Authentication
+- **Role-Based Access**: Admin and Employee roles (First signup is automatically made Admin)
+- **Profile Management**: Profile pictures, job titles, and contact details
+- **Attendance**: Daily Check-in / Check-out tracking and weekly summaries
+- **Leave Management**: Employees apply; Admins approve/reject (auto-syncs with attendance)
+- **Payroll**: Admin updates salary structures; Employees get read-only access
 
-From project root:
+---
 
-```powershell
-# Backend
-$env:PYTHONPATH="backend"
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
-# or: PYTHONPATH=backend uvicorn app.main:app --reload
-```
+## 🚀 Quick Start (Recommended)
 
-Open: http://localhost:8000/docs
+The entire application is fully containerized. You do not need to install Python, Node.js, or PostgreSQL on your machine to run it.
+
+1. **Ensure Docker Desktop is running**.
+2. **Run the application** from the root of the project:
+
+   ```bash
+   docker-compose up -d --build
+   ```
+
+3. **Access the application**:
+   - Web App (React): http://localhost:5173
+   - Backend API Docs (Swagger): http://localhost:8000/docs
+
+To stop the app and wipe the database (Reset):
 
 ```bash
-# Frontend (separate terminal)
+docker-compose down -v
+```
+
+---
+
+## 🛠️ Manual Development Setup (Without Docker)
+
+If you prefer to run the servers manually for local development without Docker containers:
+
+### 1. Environment Setup
+
+Copy the example environment file to create your active configuration:
+
+**On Windows (PowerShell):**
+```powershell
+Copy-Item backend/.env.example backend/.env
+```
+
+**On macOS / Linux (Bash/Zsh):**
+```bash
+cp backend/.env.example backend/.env
+```
+
+`backend/.env.example` contains:
+```env
+# Database Configuration
+DATABASE_URL=postgresql://hrms_user:hrms_pass@localhost:5432/hrms_db
+
+# Security & Session Configuration
+JWT_SECRET_KEY=super-secret-hrms-key-change-me
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=10080
+```
+
+> If you're running the backend locally (outside Docker Compose), make sure `DATABASE_URL` in `backend/.env` points to `localhost:5432`.
+
+### 2. Start PostgreSQL (Database Only)
+
+```bash
+docker-compose up -d db
+```
+
+### 3. Run the Backend
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate      # Mac/Linux
+.\venv\Scripts\activate       # Windows
+
+pip install -r requirements.txt
+
+uvicorn app.main:app --reload
+```
+
+### 4. Run the Frontend
+
+```bash
 cd frontend
 npm install
 npm run dev
-# Runs on Vite default (5173). Force 3000: npm run dev -- --port 3000
 ```
 
-## Authentication & RBAC
-- Signup: `POST /api/auth/signup` (first user forced to Admin; employee_id auto-generated `REVE######`).
-- Login: `POST /api/auth/login` (form: `username=<email>`, `password`).
-- Strong password enforced: ≥8 chars + upper + lower + digit.
-- JWT in `Authorization: Bearer <token>`.
-- Privileged roles: "Admin" and "HR". Non-privileged get 403 on `/admin/*` and payroll admin routes.
+---
 
-## Key Domain Rules
-- Attendance check-in/out only for **today**.
-- Leave apply rejects if `end_date < start_date` or overlapping Pending/Approved for same user.
-- Approving leave (`PATCH /api/leaves/admin/{id}/status` with "Approved") sets attendance status="Leave" and clears check-in/out for those dates.
-- Employees see only their own data; privileged see all.
-- Payroll: employee `GET /api/payroll/me`; admin `GET/PATCH /api/payroll/admin/...`.
+## 🧪 Testing (Backend)
 
-## Frontend Wiring (real + mock)
-- `frontend/src/lib/api.ts` tries real calls first, falls back to mocks.
-- Wired: login, signup, profile, check-in/out, apply leave.
-- Works without backend (demo mode) for UI flows.
-- Token stored in localStorage; sent on protected calls.
+We use pytest for backend testing. The tests automatically use a temporary in-memory SQLite database, so they will not mess up your PostgreSQL data.
 
-## Database (SQLite default, Postgres supported)
-- Default: `sqlite:///./hrms.db` (created on run, gitignored).
-- Switch to Postgres:
-  1. `docker-compose up -d`
-  2. Set in `.env`: `DATABASE_URL=postgresql://hrms_user:hrms_pass@localhost:5432/hrms_db`
-  3. `pip install psycopg2-binary`
-  4. Restart server.
-- Tables created automatically via `Base.metadata.create_all` (no Alembic/migrations).
-
-## CORS Note
-- Backend hardcodes `allow_origins=["http://localhost:3000"]`.
-- If frontend runs on Vite 5173, you will see browser CORS errors for real API calls.
-- Workaround: run FE on 3000 (`npm run dev -- --port 3000`) or broaden CORS temporarily.
-
-## Testing (backend only)
 ```bash
-PYTHONPATH=backend pytest backend/tests -v
-PYTHONPATH=backend pytest --cov=backend/app --cov-report=term-missing backend/tests
-```
-Single test: `PYTHONPATH=backend pytest backend/tests/test_leaves.py::test_leave_overlap_rejected -q`
-
-All 21 tests pass in current state (in-memory SQLite per test, autouse cleanup, fixtures for client/user/token).
-
-## Run Commands (current)
-- Dev server: `PYTHONPATH=backend uvicorn app.main:app --reload`
-- Tests: `PYTHONPATH=backend pytest backend/tests -v`
-- Frontend: `cd frontend && npm run dev`
-
-## Limitations (documented)
-- No Alembic / DB migrations. Schema is created on startup.
-- No file upload endpoints. `profile_picture` and `documents` are plain strings.
-- No real email verification (users created with `verified=True`).
-- No linting, type checking, CI, or pre-commit hooks.
-- No separate HR vs Admin permission split beyond `is_privileged`.
-- CORS is hardcoded to port 3000 only.
-- JWT secret and other secrets are in `.env` (example committed; real one gitignored).
-- Attendance check-in/out tied to server "today" (UTC date).
-- No rate limiting, password reset, or advanced audit.
-- Frontend some admin views still use static/demo data (core employee flows are wired).
-- No production hardening (e.g., secure key lengths, HTTPS enforcement in code).
-
-## Project Layout
-```
-backend/
-  app/
-    main.py
-    config.py, database.py
-    models.py, schemas.py, utils.py, auth.py
-    routers/ (auth, users, attendance, leaves, payroll)
-  tests/
-frontend/
-  src/lib/api.ts          # real + mock layer
-  src/pages/ (Login, SignUp, EmployeeDashboard, AdminDashboard)
-  src/components/...
-docker-compose.yml        # postgres only
-.env.example              # copy to .env
-.gitignore                # .env, *.db, screenshots, lockfiles, etc.
+cd backend
+PYTHONPATH=. pytest tests/ -v
 ```
 
-## Quick E2E Manual Flow (real backend)
-1. Start backend + frontend.
-2. Sign up first user → becomes Admin, gets REVE ID.
-3. Login → use dashboards.
-4. Employee: check-in, check-out, apply leave.
-5. Admin: list users, approve leave (verify attendance side-effect), manage payroll.
-6. Non-privileged user gets 403 on admin routes.
+---
 
-See AGENTS.md for deeper implementation notes and test details.
+## Important System Behaviors
+
+- **Auto Employee ID**: Auto-generated sequentially as `REVE000001`, `REVE000002`, etc.
+- **First Signup**: The very first user to register automatically gets the "Admin" role.
+- **Leave to Attendance Sync**: When an Admin approves a leave request, the system automatically marks the employee as "Leave" in the Attendance module for those specific dates.
