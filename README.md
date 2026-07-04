@@ -1,110 +1,121 @@
-# HRMS Backend
+# HRMS
 
-FastAPI backend for Human Resource Management System (Odoo x Adamas University Hackathon '26).
+Full-stack Human Resource Management System (FastAPI + React).  
+Backend package layout under `backend/app`, active frontend in `frontend/`.
 
-## Features
-- Auth (Signup / Login with JWT)
-- Role-based access (Admin / Employee)
-- Profile management (with profile_picture + documents)
-- Attendance (check-in / check-out + view)
-- Leave management (apply + admin approve/reject)
-- Payroll (employee view + admin update)
+## Current State (as of last verified run)
+- Backend: FastAPI, JWT auth, RBAC (Admin + HR privileged), attendance, leaves (with approval side-effects), payroll, profile.
+- Frontend: Vite + React/TS. Core flows wired to real API (`/api/auth/*`, profile, attendance check-in/out, leave apply) with in-memory mock fallback when backend is unreachable.
+- Tests: 21/21 passing (`PYTHONPATH=backend pytest backend/tests`).
+- DB: SQLite by default (zero setup). PostgreSQL supported via docker-compose + env change. No migrations (tables created on startup).
+- All API routes under `/api`. Swagger at `http://localhost:8000/docs`.
 
-## Quick Start (SQLite - zero setup)
+## Quick Start (SQLite)
 
-1. Create & activate venv (from project root):
-   ```
-   python -m venv venv
-   .\venv\Scripts\activate   # Windows
-   source venv/bin/activate  # Mac/Linux
-   ```
+From project root:
 
-2. Install backend deps:
-   ```
-   pip install -r backend/requirements.txt
-   ```
+```powershell
+# Backend
+$env:PYTHONPATH="backend"
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+# or: PYTHONPATH=backend uvicorn app.main:app --reload
+```
 
-3. Run backend (from project root):
-   ```
-   PYTHONPATH=backend uvicorn app.main:app --reload
-   ```
-   Open Swagger: http://127.0.0.1:8000/docs
+Open: http://localhost:8000/docs
 
-Alternative (cd into backend):
-   ```
-   cd backend
-   PYTHONPATH=. uvicorn app.main:app --reload
-   ```
+```bash
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
+# Runs on Vite default (5173). Force 3000: npm run dev -- --port 3000
+```
 
-4. Frontend (active one is now `frontend/`):
-   ```
-   cd frontend
-   npm install
-   npm run dev
-   ```
-   (Runs on Vite default port 5173. To force port 3000: `npm run dev -- --port 3000`)
+## Authentication & RBAC
+- Signup: `POST /api/auth/signup` (first user forced to Admin; employee_id auto-generated `REVE######`).
+- Login: `POST /api/auth/login` (form: `username=<email>`, `password`).
+- Strong password enforced: ≥8 chars + upper + lower + digit.
+- JWT in `Authorization: Bearer <token>`.
+- Privileged roles: "Admin" and "HR". Non-privileged get 403 on `/admin/*` and payroll admin routes.
 
-## React Frontend
-- Active frontend lives in `frontend/` (was `frontend-v0/` before restructure)
-- Default dev port: Vite 5173 (can run on 3000 via --port)
-- CORS in backend is set to allow `http://localhost:3000`
-- Send `Authorization: Bearer <token>` header after login for protected calls
-- Currently many pages are still in demo mode (no real API wiring) – see AGENTS.md for integration notes
+## Key Domain Rules
+- Attendance check-in/out only for **today**.
+- Leave apply rejects if `end_date < start_date` or overlapping Pending/Approved for same user.
+- Approving leave (`PATCH /api/leaves/admin/{id}/status` with "Approved") sets attendance status="Leave" and clears check-in/out for those dates.
+- Employees see only their own data; privileged see all.
+- Payroll: employee `GET /api/payroll/me`; admin `GET/PATCH /api/payroll/admin/...`.
 
-## Switch to PostgreSQL (later)
-1. `docker-compose up -d`
-2. Edit `.env`:
-   ```
-   DATABASE_URL=postgresql://hrms_user:hrms_pass@localhost:5432/hrms_db
-   ```
-3. Reinstall driver:
-   ```
-   pip install psycopg2-binary
-   ```
-4. Restart uvicorn
+## Frontend Wiring (real + mock)
+- `frontend/src/lib/api.ts` tries real calls first, falls back to mocks.
+- Wired: login, signup, profile, check-in/out, apply leave.
+- Works without backend (demo mode) for UI flows.
+- Token stored in localStorage; sent on protected calls.
 
-## Default Admin Creation
-- First user to sign up is automatically made **Admin** (role forced).
-- Subsequent users default to "Employee" (or "HR" if you pass role).
-- Employee IDs are auto-generated as `REVE000001`, `REVE000002`, ...
+## Database (SQLite default, Postgres supported)
+- Default: `sqlite:///./hrms.db` (created on run, gitignored).
+- Switch to Postgres:
+  1. `docker-compose up -d`
+  2. Set in `.env`: `DATABASE_URL=postgresql://hrms_user:hrms_pass@localhost:5432/hrms_db`
+  3. `pip install psycopg2-binary`
+  4. Restart server.
+- Tables created automatically via `Base.metadata.create_all` (no Alembic/migrations).
 
-## Run Tests (backend only)
+## CORS Note
+- Backend hardcodes `allow_origins=["http://localhost:3000"]`.
+- If frontend runs on Vite 5173, you will see browser CORS errors for real API calls.
+- Workaround: run FE on 3000 (`npm run dev -- --port 3000`) or broaden CORS temporarily.
 
-1. Install test deps:
-   ```
-   pip install -r backend/requirements.txt pytest pytest-cov
-   ```
+## Testing (backend only)
+```bash
+PYTHONPATH=backend pytest backend/tests -v
+PYTHONPATH=backend pytest --cov=backend/app --cov-report=term-missing backend/tests
+```
+Single test: `PYTHONPATH=backend pytest backend/tests/test_leaves.py::test_leave_overlap_rejected -q`
 
-2. From project root:
-   ```
-   PYTHONPATH=backend pytest backend/tests -v
-   ```
+All 21 tests pass in current state (in-memory SQLite per test, autouse cleanup, fixtures for client/user/token).
 
-   Or with coverage:
-   ```
-   PYTHONPATH=backend pytest --cov=backend/app --cov-report=term-missing backend/tests
-   ```
+## Run Commands (current)
+- Dev server: `PYTHONPATH=backend uvicorn app.main:app --reload`
+- Tests: `PYTHONPATH=backend pytest backend/tests -v`
+- Frontend: `cd frontend && npm run dev`
 
-Single test example:
-   ```
-   PYTHONPATH=backend pytest backend/tests/test_leaves.py::test_leave_overlap_rejected -q
-   ```
+## Limitations (documented)
+- No Alembic / DB migrations. Schema is created on startup.
+- No file upload endpoints. `profile_picture` and `documents` are plain strings.
+- No real email verification (users created with `verified=True`).
+- No linting, type checking, CI, or pre-commit hooks.
+- No separate HR vs Admin permission split beyond `is_privileged`.
+- CORS is hardcoded to port 3000 only.
+- JWT secret and other secrets are in `.env` (example committed; real one gitignored).
+- Attendance check-in/out tied to server "today" (UTC date).
+- No rate limiting, password reset, or advanced audit.
+- Frontend some admin views still use static/demo data (core employee flows are wired).
+- No production hardening (e.g., secure key lengths, HTTPS enforcement in code).
 
-Tests cover:
-- Auth (signup/login, password rules, duplicate prevention, first-user admin)
-- Profile (self-update limited, admin full update, admin list users)
-- Attendance (check-in/out rules, ownership, weekly view)
-- Leaves (apply, overlap prevention, admin approve + attendance side-effect)
-- Payroll (employee read-only, admin create/update/list)
-- RBAC (non-admin blocked, HR treated as privileged)
+## Project Layout
+```
+backend/
+  app/
+    main.py
+    config.py, database.py
+    models.py, schemas.py, utils.py, auth.py
+    routers/ (auth, users, attendance, leaves, payroll)
+  tests/
+frontend/
+  src/lib/api.ts          # real + mock layer
+  src/pages/ (Login, SignUp, EmployeeDashboard, AdminDashboard)
+  src/components/...
+docker-compose.yml        # postgres only
+.env.example              # copy to .env
+.gitignore                # .env, *.db, screenshots, lockfiles, etc.
+```
 
-## Important Implementation Decisions Made
-- Auto employee_id (REVE + 6 digits)
-- First signup → Admin automatically
-- Strong password: ≥8 chars + upper + lower + digit
-- "Admin" and "HR" both treated as privileged for admin routes
-- Leave approval immediately marks affected dates as "Leave" in attendance
-- Weekly attendance endpoint added
-- Admin can list all users + all payroll records
-- Leave overlap prevention on apply
-- No real file uploads yet (profile_picture/documents are string/URL)
+## Quick E2E Manual Flow (real backend)
+1. Start backend + frontend.
+2. Sign up first user → becomes Admin, gets REVE ID.
+3. Login → use dashboards.
+4. Employee: check-in, check-out, apply leave.
+5. Admin: list users, approve leave (verify attendance side-effect), manage payroll.
+6. Non-privileged user gets 403 on admin routes.
+
+See AGENTS.md for deeper implementation notes and test details.
