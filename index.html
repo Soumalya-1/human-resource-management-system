@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meridian — Human Resource Management System</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232B1140'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='19' fill='%23F5F4F9' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hrms.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SIGN IN SCREEN
+     ============================================================ -->
+<div id="screen-signin" class="auth-screen">
+  <div class="auth-brand-panel">
+    <!-- Brand Art -->
+    <svg class="orgchart-art" viewBox="0 0 500 700" fill="none">
+      <g stroke="#ffffff" stroke-width="1.2">
+        <path d="M120 140 C 200 200, 220 260, 260 330" />
+        <path d="M380 90 C 320 180, 300 250, 260 330" />
+        <path d="M260 330 C 240 420, 180 470, 90 520" />
+        <path d="M260 330 C 300 430, 360 480, 440 540" />
+      </g>
+      <g fill="#ffffff">
+        <circle cx="120" cy="140" r="5"/><circle cx="380" cy="90" r="4"/><circle cx="260" cy="330" r="7"/>
+        <circle cx="90" cy="520" r="5"/><circle cx="440" cy="540" r="5"/>
+      </g>
+    </svg>
+    <div class="auth-brand-top">
+      <div class="brand-mark">M</div>
+      <div class="brand-name">Meridian</div>
+    </div>
+    <div class="auth-brand-mid">
+      <div class="auth-brand-rule"></div>
+      <h1>Every person, one clear line of sight.</h1>
+      <p>Meridian brings attendance, time off, payroll structure and your people directory into a single, calm workspace.</p>
+    </div>
+    <div class="auth-brand-bottom">© 2026 Meridian HR. Built for growing teams.</div>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-form-shell">
+      <div class="eyebrow">Welcome back</div>
+      <h2>Sign in to Meridian</h2>
+      <p class="lede">Enter the details your HR team issued you when you joined.</p>
+
+      <form id="signinForm">
+        <div class="field">
+          <label for="signinId">Login ID or email</label>
+          <input class="input" id="signinId" type="text" placeholder="e.g. MEADRA20260001" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="signinPassword">Password</label>
+          <div class="input-wrap">
+            <input class="input" id="signinPassword" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+            <button type="button" class="input-adorn" data-toggle-pw="signinPassword">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+      </form>
+      <div class="auth-footer-link">Don't have a workspace yet? <button type="button" id="goToSignup">Create one</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SIGN UP SCREEN
+     ============================================================ -->
+<div id="screen-signup" class="auth-screen hidden">
+  <div class="auth-brand-panel">
+      <!-- Similar side panel as signin -->
+      <div class="auth-brand-top">
+        <div class="brand-mark">M</div>
+        <div class="brand-name">Meridian</div>
+      </div>
+      <div class="auth-brand-mid">
+        <div class="auth-brand-rule"></div>
+        <h1>Set up your company workspace.</h1>
+      </div>
+  </div>
+  <div class="auth-form-panel">
+    <div class="auth-form-shell" style="max-width:420px;">
+      <div class="eyebrow">Get started</div>
+      <h2>Create your workspace</h2>
+      <form id="signupForm">
+        <div class="field-row">
+          <div class="field">
+            <label for="companyName">Company name</label>
+            <input class="input" id="companyName" type="text" placeholder="e.g. Odoo India" required>
+          </div>
+          <button type="button" class="company-logo-upload" title="Upload logo">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4"/><path d="M6.5 9.5 12 4l5.5 5.5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
+        </div>
+        <div class="field">
+          <label for="adminName">Your full name</label>
+          <input class="input" id="adminName" type="text" placeholder="e.g. John Doe" required>
+        </div>
+        <div class="field">
+          <label for="adminEmail">Work email</label>
+          <input class="input" id="adminEmail" type="email" placeholder="you@company.com" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Create workspace</button>
+      </form>
+      <div class="auth-note">
+        Note: Normal user cannot register. When Admin creates a user, ID is auto-generated (e.g., OIJODO20260001) and first password is provided.
+      </div>
+      <div class="auth-footer-link">Already have a workspace? <button type="button" id="goToSignin">Sign in</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP SHELL (Logged In State)
+     ============================================================ -->
+<div id="app-shell" class="hidden">
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="navbar-brand">
+        <div class="brand-mark">M</div>
+        <div class="brand-name">Meridian</div>
+      </div>
+      <div class="navbar-links">
+        <button class="nav-link active" data-target="view-employees">Employees</button>
+        <button class="nav-link" data-target="view-attendance">Attendance</button>
+        <button class="nav-link" data-target="view-timeoff">Time Off</button>
+      </div>
+      <div class="navbar-actions">
+        <!-- Check In / Out Widget -->
+        <div class="checkin-widget" id="checkinWidget">
+          <button class="checkin-pill" id="checkinBtn">
+            <div class="status-ring out" id="checkinStatusDot"></div>
+            <span class="checkin-pill-label" id="checkinLabel">Check In</span>
+          </button>
+        </div>
+        <!-- User Dropdown -->
+        <div class="avatar-menu">
+          <button class="avatar-btn" id="avatarBtn">
+            <div class="avatar avatar-sm" style="background: #E2534C;">JD</div>
+          </button>
+          <div class="dropdown" id="userDropdown">
+            <div class="dropdown-user">
+              <div class="avatar avatar-sm" style="background: #E2534C;">JD</div>
+              <div>
+                <div class="dropdown-user-name">John Doe</div>
+                <div class="dropdown-user-role">HR Administrator</div>
+              </div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" onclick="switchView('view-profile')">My Profile</button>
+            <button class="dropdown-item danger" id="logoutBtn">Log Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    
+    <!-- ============================================================
+         EMPLOYEES VIEW
+         ============================================================ -->
+    <div id="view-employees" class="view-panel">
+      <div class="section-toolbar">
+        <button class="btn btn-primary" onclick="alert('Open Create Employee Modal')">NEW</button>
+        <div class="search-input">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search employees...">
+        </div>
+      </div>
+      
+      <div class="employee-grid">
+        <!-- Employee Card 1 -->
+        <div class="emp-card" onclick="openProfile('emp-1')">
+          <div class="emp-card-top">
+            <div class="avatar avatar-lg" style="background: #2F6FA8;">JD</div>
+            <div class="emp-status-chip present" title="Present"><div class="dot-inner dot-success"></div></div>
+          </div>
+          <div class="emp-card-name">John Doe</div>
+          <div class="emp-card-role">Software Engineer</div>
+          <div class="emp-card-dept">Engineering</div>
+        </div>
+        <!-- Employee Card 2 -->
+        <div class="emp-card" onclick="openProfile('emp-2')">
+          <div class="emp-card-top">
+            <div class="avatar avatar-lg" style="background: #E0A93A;">AR</div>
+            <div class="emp-status-chip leave" title="On Leave">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L2.5 8l6.5 4.5-3.5 3.5-3.1-.8c-.4-.1-.8.2-1 .5L1 17l4.5 2 2 4.5.8-.4c.3-.2.6-.6.5-1l-.8-3.1 3.5-3.5 4.5 6.5 1.2-1.2c.4-.2.7-.6.6-1.1z"/></svg>
+            </div>
+          </div>
+          <div class="emp-card-name">Aditi Rao</div>
+          <div class="emp-card-role">Product Manager</div>
+          <div class="emp-card-dept">Product</div>
+        </div>
+        <!-- Employee Card 3 -->
+        <div class="emp-card" onclick="openProfile('emp-3')">
+          <div class="emp-card-top">
+            <div class="avatar avatar-lg" style="background: #C1443F;">SM</div>
+            <div class="emp-status-chip absent" title="Absent"><div class="dot-inner dot-warning"></div></div>
+          </div>
+          <div class="emp-card-name">Sarah Mason</div>
+          <div class="emp-card-role">Designer</div>
+          <div class="emp-card-dept">Design</div>
+        </div>
+      </div>
+      
+      <div class="legend-row" style="margin-top: 24px;">
+        <div class="legend-item"><div class="dot dot-success"></div> Present</div>
+        <div class="legend-item"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L2.5 8l6.5 4.5-3.5 3.5-3.1-.8c-.4-.1-.8.2-1 .5L1 17l4.5 2 2 4.5.8-.4c.3-.2.6-.6.5-1l-.8-3.1 3.5-3.5 4.5 6.5 1.2-1.2c.4-.2.7-.6.6-1.1z"/></svg> On Leave</div>
+        <div class="legend-item"><div class="dot dot-warning"></div> Absent</div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         PROFILE VIEW
+         ============================================================ -->
+    <div id="view-profile" class="view-panel hidden">
+      <button class="back-link" onclick="switchView('view-employees')">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg> Back to Employees
+      </button>
+
+      <div class="card profile-header">
+        <div class="profile-header-main">
+          <div class="avatar-wrap">
+            <!-- Added id="profileAvatar" and id="profileInitials" -->
+            <div class="avatar avatar-xl" id="profileAvatar" style="background:#2F6FA8;"><span id="profileInitials">JD</span></div>
+            <button class="avatar-edit-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button>
+          </div>
+          <div>
+            <div class="profile-name-row">
+              <!-- Added id="profileName" -->
+              <input type="text" class="name-input" id="profileName" value="John Doe">
+            </div>
+            <div class="profile-meta">
+              <div class="profile-meta-item">
+                <label>Login ID</label>
+                <!-- Added id="profileLoginId" -->
+                <span id="profileLoginId">OIJODO20260001</span>
+              </div>
+              <div class="profile-meta-item">
+                <label>Email</label>
+                <!-- Added id="profileEmail" -->
+                <input type="email" class="meta-input" id="profileEmail" value="john@company.com">
+              </div>
+              <div class="profile-meta-item">
+                <label>Mobile</label>
+                <!-- Added id="profileMobile" -->
+                <input type="text" class="meta-input" id="profileMobile" value="+91 98765 43210">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="profile-header-side">
+          <div class="field-static">
+            <label>Company</label>
+            <div>Odoo India</div>
+          </div>
+          <div class="field-static">
+            <label>Department</label>
+            <!-- Added id="profileDept" -->
+            <div id="profileDept">Engineering</div>
+          </div>
+          <div class="field-static">
+            <label>Manager</label>
+            <!-- Added id="profileManager" -->
+            <div id="profileManager">Aditi Rao</div>
+          </div>
+          <div class="field-static">
+            <label>Location</label>
+            <!-- Added id="profileLocation" -->
+            <div id="profileLocation">Mumbai, India</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab-target="tab-resume">Resume</button>
+        <button class="tab" data-tab-target="tab-private">Private Info</button>
+        <button class="tab" data-tab-target="tab-salary">Salary Info</button>
+        <button class="tab" data-tab-target="tab-security">Security</button>
+      </div>
+
+      <!-- Tab: Resume -->
+      <div id="tab-resume" class="tab-panel resume-layout">
+        <div>
+          <div class="card info-block">
+            <div class="info-block-head"><h3>About</h3></div>
+            <textarea class="info-block-text" rows="4">Experienced full-stack developer with a focus on scalable web architectures.</textarea>
+          </div>
+          <div class="card info-block">
+            <div class="info-block-head"><h3>What I love about my job</h3></div>
+            <textarea class="info-block-text" rows="3">Solving complex logic problems and building user-centric interfaces.</textarea>
+          </div>
+        </div>
+        <div>
+          <div class="card side-block">
+            <h3>Skills</h3>
+            <div class="chip-list">
+              <span class="chip">JavaScript</span>
+              <span class="chip">React</span>
+              <span class="chip">Node.js</span>
+            </div>
+            <button class="add-link">+ Add Skills</button>
+          </div>
+          <div class="card side-block">
+            <h3>Certifications</h3>
+            <button class="add-link">+ Add Certification</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Private Info -->
+      <div id="tab-private" class="tab-panel hidden">
+        <div class="card info-grid">
+          <h4>Personal Information</h4>
+          <div class="info-row"><label>Date of Birth</label><input type="date" class="editable" value="1990-01-01"></div>
+          <div class="info-row"><label>Residing Address</label><input type="text" class="editable" value="123 Tech Park, Mumbai"></div>
+          <div class="info-row"><label>Nationality</label><input type="text" class="editable" value="Indian"></div>
+          <div class="info-row"><label>Gender</label><input type="text" class="editable" value="Male"></div>
+
+          <h4>Bank & Tax Details</h4>
+          <div class="info-row"><label>Bank Name</label><input type="text" class="editable" value="HDFC Bank"></div>
+          <div class="info-row"><label>Account Number</label><input type="text" class="editable" value="09876543211234"></div>
+          <div class="info-row"><label>IFSC Code</label><input type="text" class="editable" value="HDFC0001234"></div>
+          <div class="info-row"><label>PAN No</label><input type="text" class="editable" value="ABCDE1234F"></div>
+          <div class="info-row"><label>UAN No</label><input type="text" class="editable" value="100098765432"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Salary Info -->
+      <div id="tab-salary" class="tab-panel hidden">
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="salary-wage-band">
+            <div class="salary-wage-field">
+              <label>Monthly Wage</label>
+              <div class="amt-row">₹ <input type="number" id="inputWage" value="50000"> <span class="unit">/ month</span></div>
+            </div>
+            <div class="salary-wage-field">
+              <label>Yearly Wage</label>
+              <div class="amt-row">₹ <input type="number" id="inputYearly" value="600000" disabled> <span class="unit">/ year</span></div>
+            </div>
+            <div class="salary-wage-field small">
+              <label>Working Days / Week</label>
+              <input type="number" value="5">
+            </div>
+            <div class="salary-wage-field small">
+              <label>Daily Hours</label>
+              <input type="number" value="9">
+            </div>
+          </div>
+        </div>
+
+        <div class="salary-columns">
+          <div class="card salary-panel">
+            <h3>Salary Components</h3>
+            <!-- Basic -->
+            <div class="salary-row">
+              <div>
+                <div class="salary-row-name">Basic Salary</div>
+                <div class="salary-row-desc">Computed as 50% of monthly wages</div>
+              </div>
+              <div class="salary-row-amt">₹ <input type="text" id="valBasic" disabled> <span class="unit">/ mo</span></div>
+              <div class="salary-row-pct"><input type="text" value="50.00" disabled><span class="pct-sign">%</span></div>
+            </div>
+            <!-- HRA -->
+            <div class="salary-row">
+              <div>
+                <div class="salary-row-name">House Rent Allowance</div>
+                <div class="salary-row-desc">50% of the basic salary</div>
+              </div>
+              <div class="salary-row-amt">₹ <input type="text" id="valHRA" disabled> <span class="unit">/ mo</span></div>
+              <div class="salary-row-pct"><input type="text" value="50.00" disabled><span class="pct-sign">%</span></div>
+            </div>
+            <!-- Standard -->
+            <div class="salary-row">
+              <div>
+                <div class="salary-row-name">Standard Allowance</div>
+                <div class="salary-row-desc">Fixed statutory allowance</div>
+              </div>
+              <div class="salary-row-amt">₹ <input type="text" id="valStandard" disabled> <span class="unit">/ mo</span></div>
+              <div class="salary-row-pct"><input type="text" id="pctStandard" disabled><span class="pct-sign">%</span></div>
+            </div>
+            <!-- Performance -->
+            <div class="salary-row">
+              <div>
+                <div class="salary-row-name">Performance Bonus</div>
+                <div class="salary-row-desc">8.33% of basic salary</div>
+              </div>
+              <div class="salary-row-amt">₹ <input type="text" id="valPerformance" disabled> <span class="unit">/ mo</span></div>
+              <div class="salary-row-pct"><input type="text" value="8.33" disabled><span class="pct-sign">%</span></div>
+            </div>
+            <!-- LTA -->
+            <div class="salary-row">
+              <div>
+                <div class="salary-row-name">Leave Travel Allowance</div>
+                <div class="salary-row-desc">8.33% of basic salary</div>
+              </div>
+              <div class="salary-row-amt">₹ <input type="text" id="valLTA" disabled> <span class="unit">/ mo</span></div>
+              <div class="salary-row-pct"><input type="text" value="8.33" disabled><span class="pct-sign">%</span></div>
+            </div>
+            <!-- Fixed -->
+            <div class="salary-row">
+              <div>
+                <div class="salary-row-name">Fixed Allowance</div>
+                <div class="salary-row-desc">Remaining balance to meet defined wage</div>
+              </div>
+              <div class="salary-row-amt">₹ <input type="text" id="valFixed" disabled> <span class="unit">/ mo</span></div>
+              <div class="salary-row-pct"><input type="text" id="pctFixed" disabled><span class="pct-sign">%</span></div>
+            </div>
+            <div class="salary-total-row">
+              <div class="label">Gross Total</div>
+              <div class="amt">₹ <span id="valGross">50000.00</span></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="card salary-panel">
+              <h3>Deductions</h3>
+              <div class="salary-row" style="grid-template-columns: 1fr 100px;">
+                <div>
+                  <div class="salary-row-name">Provident Fund (PF)</div>
+                  <div class="salary-row-desc">12% of basic salary</div>
+                </div>
+                <div class="salary-row-amt">₹ <input type="text" id="valPF" disabled> <span class="unit">/ mo</span></div>
+              </div>
+              <div class="salary-row" style="grid-template-columns: 1fr 100px;">
+                <div>
+                  <div class="salary-row-name">Professional Tax</div>
+                  <div class="salary-row-desc">Standard state deduction</div>
+                </div>
+                <div class="salary-row-amt">₹ <input type="text" value="200.00" disabled> <span class="unit">/ mo</span></div>
+              </div>
+            </div>
+            
+            <div class="salary-info-card">
+              <h4>Important Note</h4>
+              Salary components are calculated automatically based on the defined Monthly Wage. The total of all components will perfectly match the defined gross wage. PF is matched by both Employer and Employee.
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tab: Security -->
+      <div id="tab-security" class="tab-panel hidden">
+        <div class="card" style="padding:40px; text-align:center; color:var(--ink-faint);">
+          Security and password reset options go here.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         ATTENDANCE VIEW
+         ============================================================ -->
+    <div id="view-attendance" class="view-panel hidden">
+      <div class="section-toolbar">
+        <div class="date-nav">
+          <button class="date-nav-btn"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+          <div class="date-nav-label">22 October 2026</div>
+          <button class="date-nav-btn"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+        </div>
+        <div class="search-input">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search records...">
+        </div>
+      </div>
+      <div class="card table-card">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Work Hours</th>
+              <th>Extra Hours</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="table-emp-cell"><div class="avatar avatar-sm" style="background:#2F6FA8;">JD</div><span class="emp-name">John Doe</span></div></td>
+              <td>10:00</td>
+              <td>19:00</td>
+              <td class="table-hours">09:00</td>
+              <td class="table-hours extra">01:00</td>
+            </tr>
+            <tr>
+              <td><div class="table-emp-cell"><div class="avatar avatar-sm" style="background:#E0A93A;">AR</div><span class="emp-name">Aditi Rao</span></div></td>
+              <td>09:30</td>
+              <td>18:30</td>
+              <td class="table-hours">09:00</td>
+              <td class="table-hours">00:00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TIME OFF VIEW
+         ============================================================ -->
+    <div id="view-timeoff" class="view-panel hidden">
+      <div class="section-toolbar">
+        <button class="btn btn-primary" id="openTimeOffModalBtn">NEW</button>
+        <div class="pill-tabs">
+          <button class="pill-tab active" data-view-target="timeoff-list">List (Admin View)</button>
+          <button class="pill-tab" data-view-target="timeoff-calendar">Calendar (Employee View)</button>
+        </div>
+      </div>
+
+      <div class="balance-cards">
+        <div class="card balance-card">
+          <div class="balance-card-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div>
+            <div class="balance-card-type">Paid Time Off</div>
+            <div class="balance-card-days">24 <small>Days Available</small></div>
+          </div>
+        </div>
+        <div class="card balance-card type-sick">
+          <div class="balance-card-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+          <div>
+            <div class="balance-card-type">Sick Time Off</div>
+            <div class="balance-card-days">07 <small>Days Available</small></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Off List (Admin) -->
+      <div id="timeoff-list" class="timeoff-subview">
+        <div class="card table-card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Time Off Type</th>
+                <th>Status / Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="table-emp-cell"><div class="avatar avatar-sm" style="background:#2F6FA8;">JD</div><span class="emp-name">John Doe</span></div></td>
+                <td>28/10/2026</td>
+                <td>28/10/2026</td>
+                <td><span class="badge badge-success">Paid time off</span></td>
+                <td>
+                  <div class="table-actions">
+                    <button class="approve-btn" title="Approve"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                    <button class="reject-btn" title="Reject"><svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Time Off Calendar (Employee) -->
+      <div id="timeoff-calendar" class="timeoff-subview hidden calendar-layout">
+        <div class="card padding" style="padding:24px;">
+           <!-- Calendar Grid Placeholder (Visual representation) -->
+           <h3 style="font-size:16px; margin-bottom: 16px;">Yearly Calendar</h3>
+           <div class="year-grid">
+             <!-- Generating 4 dummy months for visual match -->
+             <div class="month-card">
+               <div class="month-title">October <span class="yr">2026</span></div>
+               <div class="month-grid">
+                 <div class="dow">S</div><div class="dow">M</div><div class="dow">T</div><div class="dow">W</div><div class="dow">T</div><div class="dow">F</div><div class="dow">S</div>
+                 <div class="day-cell pad"></div><div class="day-cell pad"></div><div class="day-cell pad"></div><div class="day-cell pad"></div>
+                 <div class="day-cell">1</div><div class="day-cell">2</div><div class="day-cell weekend holiday" title="Gandhi Jayanti">3</div>
+                 <div class="day-cell weekend">4</div><div class="day-cell">5</div><div class="day-cell">6</div><div class="day-cell">7</div><div class="day-cell">8</div><div class="day-cell">9</div><div class="day-cell weekend">10</div>
+                 <div class="day-cell weekend">11</div><div class="day-cell">12</div><div class="day-cell pending">13</div><div class="day-cell pending">14</div><div class="day-cell">15</div><div class="day-cell">16</div><div class="day-cell weekend">17</div>
+                 <div class="day-cell weekend">18</div><div class="day-cell">19</div><div class="day-cell">20</div><div class="day-cell">21</div><div class="day-cell today">22</div><div class="day-cell">23</div><div class="day-cell weekend">24</div>
+                 <div class="day-cell weekend">25</div><div class="day-cell">26</div><div class="day-cell">27</div><div class="day-cell validated">28</div><div class="day-cell">29</div><div class="day-cell">30</div><div class="day-cell weekend">31</div>
+               </div>
+             </div>
+             <!-- ... Repeat structure as needed for UI ... -->
+           </div>
+        </div>
+        <div class="calendar-side">
+          <div class="card legend-card">
+            <h4>Legend</h4>
+            <div class="legend-item"><div class="legend-swatch bg-success" style="background:var(--success);"></div> Validated</div>
+            <div class="legend-item"><div class="legend-swatch bg-warning" style="background:var(--warning);"></div> To Approve</div>
+            <div class="legend-item"><div class="legend-swatch bg-danger" style="background:var(--danger);"></div> Refused</div>
+          </div>
+          <div class="card holiday-card">
+            <h4>Public Holidays</h4>
+            <div class="holiday-item"><span class="h-date">Jan 26, 2026</span><span class="h-name">Republic Day</span></div>
+            <div class="holiday-item"><span class="h-date">Aug 15, 2026</span><span class="h-name">Independence Day</span></div>
+            <div class="holiday-item"><span class="h-date">Oct 02, 2026</span><span class="h-name">Gandhi Jayanti</span></div>
+            <div class="holiday-item"><span class="h-date">Nov 08, 2026</span><span class="h-name">Diwali</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- ============================================================
+     TIME OFF MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="timeOffModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Time off Request</h3>
+      <button class="modal-close" onclick="closeTimeOffModal()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Employee</label>
+        <select class="input"><option>John Doe</option></select>
+      </div>
+      <div class="field">
+        <label>Time off Type</label>
+        <select class="input">
+          <option>Paid Time Off</option>
+          <option>Sick Leave</option>
+          <option>Unpaid Leave</option>
+        </select>
+      </div>
+      <div class="date-range-row">
+        <div class="field">
+          <label>Validity Period</label>
+          <input type="date" class="input" value="2026-10-13">
+        </div>
+        <div class="to-label">To</div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <input type="date" class="input" value="2026-10-14">
+        </div>
+      </div>
+      <div class="field">
+        <label>Allocation (Days)</label>
+        <input type="number" class="input" value="2.00" disabled>
+      </div>
+      <div class="field" style="margin-top: 10px;">
+        <label>Attachment (For sick leave certificate)</label>
+        <div class="attach-row">
+          <button type="button" class="company-logo-upload" title="Upload Attachment">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4"/><path d="M6.5 9.5 12 4l5.5 5.5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
+          <span style="font-size:12px; color:var(--ink-faint);">Optional</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeTimeOffModal()">Discard</button>
+      <button class="btn btn-primary" onclick="closeTimeOffModal()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
