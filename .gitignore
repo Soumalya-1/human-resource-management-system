@@ -27,3 +27,16 @@ coverage.xml
 
 # Misc
 .DS_Store
+
+# Large reference assets (not committed)
+docs/screenshots/*.png
+docs/screenshots/*.jpg
+docs/screenshots/*.jpeg
+
+# Frontend lockfile choice (pnpm chosen)
+frontend/package-lock.json
+frontend/npm-shrinkwrap.json
+
+# Backend local env (example is committed)
+backend/.env
+backend/.env.local

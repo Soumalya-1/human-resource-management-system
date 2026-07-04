@@ -3,18 +3,25 @@
 High-signal facts for agents. Only things that are easy to miss or get wrong.
 
 ## Entry Point & Structure
-- FastAPI app: `main:app`
-- Run with: `uvicorn main:app --reload`
+- FastAPI app: `app.main:app` (package layout)
+- Run with (from project root):
+  ```
+  PYTHONPATH=backend uvicorn app.main:app --reload
+  ```
+  Or from inside backend/: `PYTHONPATH=. uvicorn app.main:app --reload`
 - All API routes are under `/api`
-- Routers live in `routers/` and use `APIRouter` with prefixes:
+- Routers live in `backend/app/routers/` and use `APIRouter` with prefixes:
   - auth, users, attendance, leaves, payroll
-- Single package repo. Root = everything.
+- Backend code lives under `backend/app/`
+- Tests live under `backend/tests/`
+- Requirements: `backend/requirements.txt`
 
 ## Commands
-- Dev server: `uvicorn main:app --reload`
-- Tests: `pytest -v`
-- Coverage: `pytest --cov=. --cov-report=term-missing`
+- Dev server: `PYTHONPATH=backend uvicorn app.main:app --reload`
+- Tests: `PYTHONPATH=backend pytest backend/tests -v`
+- Coverage: `PYTHONPATH=backend pytest --cov=backend/app --cov-report=term-missing backend/tests`
 - No lint, typecheck, formatter, or pre-commit configured yet.
+- Run single test: `PYTHONPATH=backend pytest backend/tests/test_leaves.py::test_leave_overlap_rejected -q`
 
 ## Authentication
 - Signup: `POST /api/auth/signup`
@@ -53,13 +60,13 @@ High-signal facts for agents. Only things that are easy to miss or get wrong.
 
 ## Testing
 - `pytest` + `fastapi.testclient.TestClient`.
-- `tests/conftest.py` does critical setup:
+- `backend/tests/conftest.py` does critical setup:
   - Sets `os.environ["DATABASE_URL"] = "sqlite:///:memory:"` **before** importing app/database.
   - Overrides `get_db` dependency.
   - Creates tables once via `Base.metadata.create_all`.
 - Useful fixtures: `create_user`, `get_token`, `auth_header`, `db_session`.
 - Tests are backend-only. No frontend or real DB required.
-- Run single test: `pytest tests/test_leaves.py::test_leave_overlap_rejected -q`
+- Run single test: `PYTHONPATH=backend pytest backend/tests/test_leaves.py::test_leave_overlap_rejected -q`
 - Import timing matters: set DATABASE_URL env var **before** any `from main import` or `from database import`.
 
 ## Database & Environment
@@ -84,14 +91,16 @@ High-signal facts for agents. Only things that are easy to miss or get wrong.
 - No separate HR vs Admin permission split beyond `is_privileged`
 
 ## Import & Code Quirks
-- `schemas.py` imports `is_strong_password` from `utils`
-- `auth.py` imports `is_privileged` from `utils` (after some functions)
+- `backend/app/schemas.py` imports `is_strong_password` from `utils`
+- `backend/app/auth.py` imports `is_privileged` from `utils` (after some functions)
 - In tests, DB env var must be set before importing `main` or `database`
-- `utils.py` contains the most important shared logic (ID generation, password rules, leave helpers, privileged check).
+- `backend/app/utils.py` contains the most important shared logic (ID generation, password rules, leave helpers, privileged check).
 
 ## Quick Reference
 - First admin: just sign up once.
 - Employee ID format: always starts with `REVE` + 6 digits.
 - Leave approval mutates attendance.
 - Use privileged role for any `/admin` test.
-- Always run tests with `pytest` (in-memory DB).
+- Always run tests with `PYTHONPATH=backend pytest backend/tests ...`
+- Active frontend is `frontend/` (TypeScript/React from former frontend-v0).
+- Backend root command pattern: `PYTHONPATH=backend uvicorn app.main:app --reload`
