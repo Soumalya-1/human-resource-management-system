@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+# 1. PostgreSQL Database
+  db:
+    image: postgres:18-alpine    # Or 15-alpine, whichever you are using
+    environment:
+      POSTGRES_USER: hrms_user
+      POSTGRES_PASSWORD: hrms_pass
+      POSTGRES_DB: hrms_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hrms_user -d hrms_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. FastAPI Backend
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Notice the host is "db" (the name of the service above), not "localhost"
+      - DATABASE_URL=postgresql://hrms_user:hrms_pass@db:5432/hrms_db
+      - JWT_SECRET_KEY=super-secret-hrms-key-change-me
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. React Frontend
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # The browser makes the request, so it still needs to point to localhost
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

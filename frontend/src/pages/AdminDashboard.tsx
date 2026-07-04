@@ -1,0 +1,88 @@
+import { useEffect, useState } from "react"
+import { UserPlus, Download } from "lucide-react"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { Button } from "@/components/ui/Button"
+import { StatCard } from "@/components/dashboard/StatCard"
+import { AttendanceSummary } from "@/components/dashboard/AttendanceSummary"
+import { LeaveRequestsCard } from "@/components/dashboard/LeaveRequestsCard"
+import { RecentEmployees } from "@/components/dashboard/RecentEmployees"
+import { QuickActions } from "@/components/dashboard/QuickActions"
+import { getProfile, getUsers } from "@/lib/api"
+
+export default function AdminDashboard() {
+  const [admin, setAdmin] = useState<any>(null)
+  const [employees, setEmployees] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Fetch Admin Profile and Employee Directory concurrently
+    Promise.all([getProfile(), getUsers()]).then(([profileData, usersData]) => {
+      setAdmin(profileData)
+      setEmployees(usersData)
+      setLoading(false)
+    })
+  }, [])
+
+  if (loading) return <div className="p-8 text-center">Loading Admin Dashboard...</div>
+
+  // Dynamically count total employees from PostgreSQL
+  const totalEmployeesCount = employees.length > 0 ? employees.length : 0
+
+  return (
+    <DashboardLayout
+      role="admin"
+      userName={admin?.name || "Admin"}
+      userRole={admin?.role || "HR Administrator"}
+      avatar={admin?.profile_picture || `https://ui-avatars.com/api/?name=${admin?.name || 'Admin'}&background=random`}
+    >
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* Page header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
+              Good morning, {admin?.name?.split(" ")[0]}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Here&apos;s what&apos;s happening across your organization today.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="md">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+            <Button size="md">
+              <UserPlus className="h-4 w-4" />
+              Add Employee
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="Total Employees" value={totalEmployeesCount.toString()} change={`+${totalEmployeesCount}`} trend="up" icon="users" />
+          <StatCard label="Present Today" value="1" change="+100%" trend="up" icon="check" />
+          <StatCard label="On Leave" value="0" change="0" trend="down" icon="calendar" />
+          <StatCard label="Open Positions" value="9" change="+2" trend="up" icon="briefcase" />
+        </div>
+
+        {/* Middle row */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <AttendanceSummary />
+          </div>
+          <LeaveRequestsCard />
+        </div>
+
+        {/* Bottom row */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            {/* Pass the dynamic employee directory into the table */}
+            <RecentEmployees employees={employees} />
+          </div>
+          <QuickActions />
+        </div>
+      </div>
+    </DashboardLayout>
+  )
+}

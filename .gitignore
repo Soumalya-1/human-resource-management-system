@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Project specific
+hrms.db
+*.db
+*.sqlite
+*.log
+.pytest_cache/
+htmlcov/
+coverage.xml
+
+# IDE
+.idea/
+.vscode/
+
+# Misc
+.DS_Store
+
+# Large reference assets (not committed)
+docs/screenshots/*.png
+docs/screenshots/*.jpg
+docs/screenshots/*.jpeg
+
+# Frontend lockfile choice (pnpm chosen)
+frontend/package-lock.json
+frontend/npm-shrinkwrap.json
+
+# Backend local env (example is committed)
+backend/.env
+backend/.env.local
