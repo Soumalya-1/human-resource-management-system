@@ -10,7 +10,7 @@ A role-aware HR platform for attendance, leave, payroll, and employee management
 
 ## Overview
 
-HRMS is a role-based system covering the full employee lifecycle: authentication, profile management, attendance tracking, leave workflows, approvals, and payroll visibility. Two clear personas — **Admin**, **HR Officer**, and **Employee** — each see only what they need.
+HRMS is a role-based system covering the full employee lifecycle: authentication, profile management, attendance tracking, leave workflows, approvals, and payroll visibility. Three clear personas — **Admin**, **HR Officer**, and **Employee** — each see only what they need.
 
 ## Tech Stack
 
@@ -18,10 +18,10 @@ HRMS is a role-based system covering the full employee lifecycle: authentication
 |---|---|
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS |
 | Backend | Python 3.13, FastAPI, SQLAlchemy 2.0 |
-| Database | SQLite (default) / PostgreSQL (via docker-compose) |
+| Database | PostgreSQL 18 |
 | Auth | JWT (HS256) + bcrypt, role-based access control |
 | Testing | pytest, fastapi.testclient |
-| Infrastructure | Docker Compose (optional Postgres) |
+| Infrastructure | Docker Compose |
 
 ## Features
 
@@ -61,50 +61,84 @@ HRMS is a role-based system covering the full employee lifecycle: authentication
 ### API Security
 - All `db.commit()` calls wrapped in `try/except IntegrityError` → 400 response
 - `int(user_id)` from JWT wrapped in `try/except ValueError` → 401
-- SQLite foreign keys enforced via `PRAGMA foreign_keys=ON`
 - CORS configurable via `CORS_ORIGINS` env var
-- Password validation (schema-level `Literal` enums for role/leave_type/status)
+- Schema-level `Literal` enums enforced for role, leave_type, and leave status
 
 ## Quick Start
 
-### Prerequisites
-- Python 3.13+
-- Node.js 18+
-- npm or pnpm
+### With Docker (primary)
 
-### Backend
+```bash
+docker compose up -d
+```
 
-```powershell
+This starts three containers:
+- **PostgreSQL** on port `5433`
+- **FastAPI backend** on port `8000`
+- **React frontend** on port `5173`
+
+Open **[http://localhost:5173](http://localhost:5173)** in your browser. The first user to sign up is automatically assigned the **Admin** role.
+
+### Without Docker
+
+Requires **PostgreSQL** installed and running locally.
+
+#### 1. Create the database
+
+```bash
+# Connect to PostgreSQL and create the database
+psql -U postgres -c "CREATE USER hrms_user WITH PASSWORD 'hrms_pass';"
+psql -U postgres -c "CREATE DATABASE hrms_db OWNER hrms_user;"
+psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE hrms_db TO hrms_user;"
+```
+
+Or use your preferred GUI (pgAdmin, DBeaver) to create a database named `hrms_db` with user `hrms_user` / password `hrms_pass` on port `5432`.
+
+#### 2. Backend
+
+```bash
 # From project root
-$env:PYTHONPATH="backend"
 cd backend
 pip install -r requirements.txt
+cp .env.example .env          # already points to postgresql://hrms_user:hrms_pass@localhost:5433/hrms_db
 uvicorn app.main:app --reload
 ```
 
-### Frontend
+> **Note**: If your local PostgreSQL runs on the default port `5432`, update `.env` to `DATABASE_URL=postgresql://hrms_user:hrms_pass@localhost:5432/hrms_db`.
 
-```powershell
+#### 3. Frontend
+
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The first signup becomes Admin automatically.
+Open **[http://localhost:5173](http://localhost:5173)**. The first signup becomes Admin automatically.
 
-### With PostgreSQL (optional)
+## Accessing the Database
 
-```powershell
-docker-compose up -d
-# Edit .env: DATABASE_URL=postgresql://hrms_user:hrms_pass@localhost:5432/hrms_db
-pip install psycopg2-binary
+### Via psql (Docker)
+
+```bash
+docker compose exec db psql -U hrms_user -d hrms_db
 ```
+
+### Via a GUI tool (DBeaver, pgAdmin, TablePlus)
+
+| Setting | Value |
+|---|---|
+| Host | `localhost` |
+| Port | `5433` (Docker) / `5432` (native) |
+| Database | `hrms_db` |
+| User | `hrms_user` |
+| Password | `hrms_pass` |
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:///./hrms.db` | Database connection string |
+| `DATABASE_URL` | `postgresql://hrms_user:hrms_pass@localhost:5433/hrms_db` | Database connection string |
 | `JWT_SECRET_KEY` | `change-me-to-a-strong-random-secret` | JWT signing key (change in production) |
 | `ALGORITHM` | `HS256` | JWT algorithm |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `10080` | Token expiry (7 days) |
@@ -113,12 +147,12 @@ pip install psycopg2-binary
 
 ## Testing
 
-```powershell
+```bash
 $env:PYTHONPATH="backend"
 pytest backend/tests -v
 ```
 
-23 tests covering auth, attendance, leaves, payroll, profile, and RBAC. All pass with zero deprecation warnings.
+23 tests covering auth, attendance, leaves, payroll, profile, and RBAC. All pass with zero deprecation warnings. Tests use an in-memory SQLite database — no PostgreSQL connection required.
 
 ## Project Structure
 
@@ -143,7 +177,7 @@ hrms/
 │   │   └── lib/api.ts        # API client with network-error-only mock fallback
 │   ├── public/               # Static assets
 │   └── package.json
-├── docker-compose.yml        # Postgres + backend + frontend
+├── docker-compose.yml        # PostgreSQL + backend + frontend
 ├── .pre-commit-config.yaml
 └── AGENTS.md                 # Detailed reference for AI coding agents
 ```
@@ -152,7 +186,7 @@ hrms/
 
 - **No silent failures**: API errors (401, 400, 422, 403) propagate to the UI. Mock fallback activates only on actual network errors (backend unreachable), with a visible amber banner.
 - **Data integrity**: No partial commits — `mark_attendance_as_leave` does not commit internally. Un-approving a leave reverts attendance changes.
-- **Defense in depth**: Schema-level `Literal` enums, Pydantic validators, DB-level FK constraints (SQLite via PRAGMA), and wrapped commits.
+- **Defense in depth**: Schema-level `Literal` enums, Pydantic validators, wrapped commits with IntegrityError handling.
 - **Tested**: 23 tests, all pass. Verified E2E flows for signup, login, attendance, leaves, payroll, RBAC, and edge cases (past-dates, negative salaries, invalid roles, weak passwords).
 
 ## Limitations

@@ -2,11 +2,15 @@
 
 High-signal facts for agents. Only things that are easy to miss or get wrong.
 
-> Current verified state (as of last run): 21/21 tests pass. Frontend builds clean (0 TypeScript errors). Backend fully functional for core HR flows. All critical/high production bugs from audit fixed. SQLite default; Postgres supported. No migrations.
+> Current verified state (as of last run): 23 tests pass. Frontend builds clean (0 TypeScript errors). Backend fully functional for core HR flows. All critical/high production bugs from audit fixed. PostgreSQL primary (Docker Compose); SQLite used only in tests. No migrations.
 
 ## Entry Point & Structure
 - FastAPI app: `app.main:app` (package layout under `backend/app`)
-- Run with (from project root):
+- Run with Docker (from project root):
+  ```
+  docker compose up -d
+  ```
+  Or without Docker (from project root):
   ```
   $env:PYTHONPATH="backend"; uvicorn app.main:app --reload
   ```
@@ -19,7 +23,7 @@ High-signal facts for agents. Only things that are easy to miss or get wrong.
 - Frontend: `frontend/` (Vite + React/TS). `npm run build` runs `tsc -b && vite build`.
 
 ## Commands
-- Dev server (Windows PowerShell): `$env:PYTHONPATH="backend"; uvicorn app.main:app --reload`
+- Dev server (Windows PowerShell, without Docker): `$env:PYTHONPATH="backend"; uvicorn app.main:app --reload`
 - Tests: `$env:PYTHONPATH="backend"; pytest backend/tests -v`
 - Coverage: `$env:PYTHONPATH="backend"; pytest --cov=backend/app --cov-report=term-missing backend/tests`
 - Run single test: `$env:PYTHONPATH="backend"; pytest backend/tests/test_leaves.py::test_leave_overlap_rejected -q`
@@ -86,14 +90,10 @@ High-signal facts for agents. Only things that are easy to miss or get wrong.
 - Import timing matters: set DATABASE_URL env var **before** any `from main import` or `from database import`.
 
 ## Database & Environment
-- `.env` (at project root) controls `DATABASE_URL` (SQLite default: `sqlite:///./hrms.db`).
-- `hrms.db` is created automatically and is gitignored.
+- `.env` controls `DATABASE_URL` (default: `postgresql://hrms_user:hrms_pass@localhost:5433/hrms_db`).
 - Tables created on every startup: `models.Base.metadata.create_all(bind=engine)`. **No migrations**.
-- Switch to PostgreSQL:
-  1. `docker-compose up -d`
-  2. Edit `.env`: `DATABASE_URL=postgresql://hrms_user:hrms_pass@localhost:5432/hrms_db`
-  3. `pip install psycopg2-binary`
-  4. Restart server.
+- Primary way: `docker compose up -d` starts PostgreSQL on port 5433.
+- Running without Docker: ensure PostgreSQL is running locally and `DATABASE_URL` matches (port 5432 if native).
 - `.env` is gitignored; `backend/.env.example` is the tracked template.
 
 ## CORS & Frontend
@@ -131,7 +131,8 @@ High-signal facts for agents. Only things that are easy to miss or get wrong.
 - Use privileged role for any `/admin` test.
 - Always run tests with `$env:PYTHONPATH="backend"; pytest backend/tests ...`
 - Active frontend is `frontend/` (TypeScript/React).
-- Backend root command: `$env:PYTHONPATH="backend"; uvicorn app.main:app --reload`
+- Backend root command (Docker): `docker compose up -d`
+- Backend root command (no Docker): `$env:PYTHONPATH="backend"; uvicorn app.main:app --reload`
 - Frontend build command: `cd frontend && npm run build`
 - Current test count (verified): 23 passed. All E2E flows verified.
 
@@ -149,8 +150,7 @@ High-signal facts for agents. Only things that are easy to miss or get wrong.
 ## Limitations (for awareness)
 - CORS is configurable via `CORS_ORIGINS` env var.
 - No DB migrations; schema is recreated from models on each start (data lost on schema change without manual intervention).
-- SQLite foreign keys are enforced via `PRAGMA foreign_keys=ON` on connect.
-- SQLite file or Postgres connection string must be correct before import.
+- Database connection string must be correct before import.
 - Strong password is enforced on signup via schema validator + utils.
 - Check-in/out and leave dates are server-time based.
 - No notification/recent-activity/leave-balance endpoints — widgets show empty/sensible default states.

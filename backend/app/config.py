@@ -2,7 +2,7 @@ from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./hrms.db"
+    DATABASE_URL: str = "postgresql://hrms_user:hrms_pass@localhost:5433/hrms_db"
     JWT_SECRET_KEY: str = "change-me-to-a-strong-random-secret"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
