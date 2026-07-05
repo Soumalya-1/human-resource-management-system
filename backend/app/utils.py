@@ -23,20 +23,23 @@ def generate_next_employee_id(db: Session) -> str:
     next_num = max_num + 1
     return f"{EMPLOYEE_ID_PREFIX}{next_num:0{EMPLOYEE_ID_WIDTH}d}"
 
-def is_strong_password(password: str) -> bool:
+SPECIAL_CHARS = r"!@#$%^&*(),.?\":{}|<>_-+"
+
+def validate_password_strength(password: str) -> list[str]:
+    errors = []
     if len(password) < 8:
-        return False
+        errors.append("at least 8 characters")
     if len(password) > 128:
-        return False
+        errors.append("no more than 128 characters")
     if not re.search(r"[A-Z]", password):
-        return False
+        errors.append("one uppercase letter")
     if not re.search(r"[a-z]", password):
-        return False
+        errors.append("one lowercase letter")
     if not re.search(r"\d", password):
-        return False
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>_\-+]", password):
-        return False
-    return True
+        errors.append("one digit")
+    if not re.search(rf"[{re.escape(SPECIAL_CHARS)}]", password):
+        errors.append(f"one special character ({SPECIAL_CHARS})")
+    return errors
 
 def is_privileged(role: str) -> bool:
     return role in ("Admin", "HR")

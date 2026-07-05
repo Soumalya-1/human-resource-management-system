@@ -57,7 +57,21 @@ export async function apiSignup(payload: { email: string; password: string; name
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...payload, role: payload.role || 'Employee' }),
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    let detail = `Request failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.detail) {
+        if (Array.isArray(body.detail)) {
+          const msgs = body.detail.map((d: any) => d.msg?.replace(/^Value error,\s*/i, '') || '');
+          detail = msgs.join('; ');
+        } else {
+          detail = String(body.detail);
+        }
+      }
+    } catch {}
+    throw new Error(detail);
+  }
   return res.json();
 }
 

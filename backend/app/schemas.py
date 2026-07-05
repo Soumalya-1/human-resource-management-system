@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator, Field, ConfigDict
 from typing import Optional, Literal
 from datetime import date, datetime
-from .utils import is_strong_password
+from .utils import validate_password_strength
 
 # --- Auth ---
 class UserCreate(BaseModel):
@@ -14,8 +14,9 @@ class UserCreate(BaseModel):
     @field_validator('password')
     @classmethod
     def password_strong(cls, v: str) -> str:
-        if not is_strong_password(v):
-            raise ValueError('Password must be at least 8 chars with uppercase, lowercase and digit')
+        errors = validate_password_strength(v)
+        if errors:
+            raise ValueError(f"Password must contain: {', '.join(errors)}")
         return v
 
 class Token(BaseModel):
