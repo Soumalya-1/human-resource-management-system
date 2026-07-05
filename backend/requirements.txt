@@ -8,6 +8,7 @@ pyjwt
 python-multipart
 python-dotenv
 psycopg2-binary
+email-validator
 
 # Testing
 pytest
