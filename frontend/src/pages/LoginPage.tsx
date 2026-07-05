@@ -36,7 +36,7 @@ export default function LoginPage() {
         const targetRole = profile?.role?.toLowerCase().includes("admin") ? "admin" : "employee"
         navigate(targetRole === "admin" ? "/admin" : "/employee")
       } else {
-        setError(msg)
+        setError("Incorrect email or password. Don't have an account? Sign up above.")
       }
     } finally {
       setLoading(false)
