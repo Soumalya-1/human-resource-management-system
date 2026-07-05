@@ -20,13 +20,14 @@ interface ProfileData {
 export default function EmployeeDashboard() {
   const [user, setUser] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
     getProfile().then((data) => {
       if (!cancelled) { setUser(data); setLoading(false) }
-    }).catch(() => {
-      if (!cancelled) setLoading(false)
+    }).catch((err: unknown) => {
+      if (!cancelled) { setError(err instanceof Error ? err.message : "Failed to load profile"); setLoading(false) }
     })
     return () => { cancelled = true }
   }, [])
@@ -41,6 +42,11 @@ export default function EmployeeDashboard() {
       avatar={user?.profile_picture || `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=random`}
     >
       <div className="mx-auto max-w-7xl space-y-6">
+        {error && (
+          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {error}
+          </div>
+        )}
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
             Welcome back, {user?.name?.split(" ")[0] || "User"}

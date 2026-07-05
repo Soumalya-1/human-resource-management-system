@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 
 from app import models, schemas, auth
 from app.database import get_db
@@ -36,7 +36,7 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     try:
         db.commit()
-    except IntegrityError:
+    except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Email or Employee ID already exists")
     db.refresh(new_user)

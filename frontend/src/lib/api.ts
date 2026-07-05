@@ -26,8 +26,11 @@ async function request(path: string, options: RequestInit = {}) {
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(text || `HTTP ${res.status}`);
+    const body = await res.json().catch(() => null);
+    if (body && typeof body.detail === 'string') {
+      throw new Error(body.detail);
+    }
+    throw new Error(body?.detail?.[0]?.msg?.replace('Value error, ', '') || `Request failed (${res.status})`);
   }
   const ct = res.headers.get('content-type') || '';
   return ct.includes('application/json') ? res.json() : res.text();

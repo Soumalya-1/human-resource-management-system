@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from app import models
 from app.database import engine
@@ -9,6 +11,20 @@ from app.routers import auth_router, users_router, attendance_router, leaves_rou
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="HRMS API")
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    messages = []
+    for err in exc.errors():
+        msg = err.get("msg", "").replace("Value error, ", "")
+        messages.append(msg)
+    return JSONResponse(status_code=422, content={"detail": ", ".join(messages) if messages else "Validation error"})
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 app.add_middleware(
     CORSMiddleware,

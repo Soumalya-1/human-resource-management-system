@@ -13,13 +13,14 @@ export default function AdminDashboard() {
   const [admin, setAdmin] = useState<{ name?: string | null; role?: string | null; profile_picture?: string | null; [key: string]: unknown } | null>(null)
   const [employees, setEmployees] = useState<{ id: number; role: string; [key: string]: unknown }[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
     Promise.all([getProfile(), getUsers()]).then(([profileData, usersData]) => {
       if (!cancelled) { setAdmin(profileData); setEmployees(usersData); setLoading(false) }
-    }).catch(() => {
-      if (!cancelled) setLoading(false)
+    }).catch((err: unknown) => {
+      if (!cancelled) { setError(err instanceof Error ? err.message : "Failed to load dashboard"); setLoading(false) }
     })
     return () => { cancelled = true }
   }, [])
@@ -37,6 +38,11 @@ export default function AdminDashboard() {
       avatar={admin?.profile_picture || `https://ui-avatars.com/api/?name=${admin?.name || 'Admin'}&background=random`}
     >
       <div className="mx-auto max-w-7xl space-y-6">
+        {error && (
+          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {error}
+          </div>
+        )}
         {/* Page header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

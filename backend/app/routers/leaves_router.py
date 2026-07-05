@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import date
 
 from app import models, schemas, auth
@@ -21,7 +21,7 @@ def apply_leave(leave: schemas.LeaveApply, db: Session = Depends(get_db), curren
     db.add(new_leave)
     try:
         db.commit()
-    except IntegrityError:
+    except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not create leave request")
     db.refresh(new_leave)
@@ -50,7 +50,7 @@ def update_leave_status(leave_id: int, status_data: schemas.LeaveStatusUpdate, d
 
     try:
         db.commit()
-    except IntegrityError:
+    except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not update leave status")
     return {"message": f"Leave {status_data.status.lower()}"}

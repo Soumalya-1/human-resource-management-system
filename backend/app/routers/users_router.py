@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 from typing import List
 
 from app import models, schemas, auth
@@ -22,7 +22,7 @@ def update_my_profile(profile_data: schemas.UserUpdateEmployee, db: Session = De
         current_user.profile_picture = profile_data.profile_picture
     try:
         db.commit()
-    except IntegrityError:
+    except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not update profile")
     db.refresh(current_user)
@@ -43,7 +43,7 @@ def admin_update_user(user_id: int, data: schemas.UserUpdateAdmin, db: Session =
         setattr(user, key, value)
     try:
         db.commit()
-    except IntegrityError:
+    except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not update user")
     db.refresh(user)

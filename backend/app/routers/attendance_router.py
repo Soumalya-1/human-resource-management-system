@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, date as date_cls, timezone
 from typing import List
 
@@ -31,7 +32,11 @@ def check_in(db: Session = Depends(get_db), current_user: models.User = Depends(
         status="Present"
     )
     db.add(new_att)
-    db.commit()
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not check in")
     return {"message": "Check-in successful"}
 
 @router.post("/check-out")
@@ -51,7 +56,11 @@ def check_out(db: Session = Depends(get_db), current_user: models.User = Depends
     attendance.check_out = datetime.now(timezone.utc)
     if attendance.status not in ("Half-day", "Leave"):
         attendance.status = "Present"
-    db.commit()
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not check out")
     return {"message": "Check-out successful"}
 
 @router.get("/")

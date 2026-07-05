@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 from typing import List
 
 from app import models, schemas, auth
@@ -45,7 +45,7 @@ def update_payroll(user_id: int, data: schemas.PayrollUpdate, db: Session = Depe
 
     try:
         db.commit()
-    except IntegrityError:
+    except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not update payroll")
     db.refresh(payroll)
