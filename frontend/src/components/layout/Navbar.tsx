@@ -8,11 +8,13 @@ export function Navbar({
   userName,
   userRole,
   avatar,
+  onSearch,
 }: {
   onMenu: () => void
   userName: string
   userRole: string
   avatar?: string | null
+  onSearch?: (q: string) => void
 }) {
   const navigate = useNavigate()
 
@@ -28,11 +30,12 @@ export function Navbar({
 
       <div className="relative hidden max-w-md flex-1 md:block">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="search"
-          placeholder="Search employees, requests..."
-          className="h-10 w-full rounded-xl border border-border bg-muted/60 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-2 focus:ring-ring/30"
-        />
+          <input
+            type="search"
+            placeholder="Search employees, requests..."
+            onChange={(e) => onSearch?.(e.target.value)}
+            className="h-10 w-full rounded-xl border border-border bg-muted/60 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-2 focus:ring-ring/30"
+          />
       </div>
 
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
@@ -41,7 +44,6 @@ export function Navbar({
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--color-danger)] ring-2 ring-card" />
         </button>
 
         <div className="hidden h-8 w-px bg-border sm:block" />

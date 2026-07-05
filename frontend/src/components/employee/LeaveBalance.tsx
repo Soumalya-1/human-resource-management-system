@@ -1,12 +1,6 @@
 import { Card, CardHeader } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 
-const defaultLeaves = [
-  { label: "Annual Leave", total: 20, used: 0, color: "var(--color-primary)" },
-  { label: "Sick Leave", total: 10, used: 0, color: "var(--color-warning)" },
-  { label: "Unpaid Leave", total: 5, used: 0, color: "var(--color-danger)" },
-]
-
 interface LeaveBalanceItem {
   label: string
   total: number
@@ -15,7 +9,7 @@ interface LeaveBalanceItem {
 }
 
 export function LeaveBalance({ leaves }: { leaves?: LeaveBalanceItem[] }) {
-  const items = leaves && leaves.length > 0 ? leaves : defaultLeaves
+  const items = leaves && leaves.length > 0 ? leaves : null
 
   return (
     <Card hover className="h-full">
@@ -25,7 +19,7 @@ export function LeaveBalance({ leaves }: { leaves?: LeaveBalanceItem[] }) {
         action={<Button variant="soft" size="sm">Request</Button>}
       />
       <div className="space-y-5 p-5 pt-1">
-        {items.map((leave) => {
+        {items ? items.map((leave) => {
           const remaining = leave.total - leave.used
           const pct = leave.total > 0 ? (leave.used / leave.total) * 100 : 0
           return (
@@ -44,7 +38,11 @@ export function LeaveBalance({ leaves }: { leaves?: LeaveBalanceItem[] }) {
               </div>
             </div>
           )
-        })}
+        }) : (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            Leave balances will appear here
+          </div>
+        )}
       </div>
     </Card>
   )

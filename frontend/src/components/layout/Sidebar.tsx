@@ -1,8 +1,6 @@
 import { NavLink } from "react-router-dom"
 import {
   LayoutDashboard,
-  Settings,
-  LifeBuoy,
   X,
 } from "lucide-react"
 import { Logo } from "@/components/ui/Logo"
@@ -79,21 +77,7 @@ export function Sidebar({
             </NavLink>
           ))}
 
-          <p className="px-3 pb-2 pt-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            General
-          </p>
-          {[
-            { label: "Settings", icon: Settings },
-            { label: "Help Center", icon: LifeBuoy },
-          ].map((item) => (
-            <button
-              key={item.label}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </button>
-          ))}
+
         </nav>
 
       </aside>

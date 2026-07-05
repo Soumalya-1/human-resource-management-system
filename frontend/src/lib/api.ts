@@ -228,3 +228,25 @@ export async function getLeaves() {
 export async function approveLeave(leaveId: number, status: string, adminComments?: string) {
   return await apiApproveLeave(leaveId, status, adminComments);
 }
+
+export async function apiGetPayrolls() {
+  return request('/api/payroll/admin');
+}
+
+export async function apiUpdatePayroll(userId: number, data: { basic_salary: number; allowances: number; deductions: number }) {
+  return request(`/api/payroll/admin/${userId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getPayrolls() {
+  try { return await apiGetPayrolls(); } catch (err) {
+    if (isNetworkError(err)) return [];
+    throw err;
+  }
+}
+
+export async function updatePayroll(userId: number, data: { basic_salary: number; allowances: number; deductions: number }) {
+  return await apiUpdatePayroll(userId, data);
+}

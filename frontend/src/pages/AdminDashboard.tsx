@@ -14,15 +14,21 @@ export default function AdminDashboard() {
   const [employees, setEmployees] = useState<{ id: number; role: string; [key: string]: unknown }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  async function loadData(cancelled?: { v: boolean }) {
+    try {
+      const [profileData, usersData] = await Promise.all([getProfile(), getUsers()])
+      if (!cancelled?.v) { setAdmin(profileData); setEmployees(usersData); setLoading(false) }
+    } catch (err: unknown) {
+      if (!cancelled?.v) { setError(err instanceof Error ? err.message : "Failed to load dashboard"); setLoading(false) }
+    }
+  }
 
   useEffect(() => {
-    let cancelled = false
-    Promise.all([getProfile(), getUsers()]).then(([profileData, usersData]) => {
-      if (!cancelled) { setAdmin(profileData); setEmployees(usersData); setLoading(false) }
-    }).catch((err: unknown) => {
-      if (!cancelled) { setError(err instanceof Error ? err.message : "Failed to load dashboard"); setLoading(false) }
-    })
-    return () => { cancelled = true }
+    const c = { v: false }
+    loadData(c)
+    return () => { c.v = true }
   }, [])
 
   if (loading) return <div className="p-8 text-center">Loading Admin Dashboard...</div>
@@ -36,6 +42,7 @@ export default function AdminDashboard() {
       userName={admin?.name || "Admin"}
       userRole={admin?.role || "HR Administrator"}
       avatar={admin?.profile_picture || `https://ui-avatars.com/api/?name=${admin?.name || 'Admin'}&background=random`}
+      onSearch={setSearchQuery}
     >
       <div className="mx-auto max-w-7xl space-y-6">
         {error && (
@@ -85,9 +92,9 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             {/* Pass the dynamic employee directory into the table */}
-            <RecentEmployees employees={employees} />
+            <RecentEmployees employees={employees} searchQuery={searchQuery} />
           </div>
-          <QuickActions />
+          <QuickActions onEmployeeCreated={() => loadData()} />
         </div>
       </div>
     </DashboardLayout>

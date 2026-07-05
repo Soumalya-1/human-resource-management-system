@@ -7,12 +7,14 @@ export function DashboardLayout({
   userName,
   userRole,
   avatar,
+  onSearch,
   children,
 }: {
   role: "admin" | "employee"
   userName: string
   userRole: string
   avatar: string
+  onSearch?: (q: string) => void
   children: ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -26,6 +28,7 @@ export function DashboardLayout({
           userName={userName}
           userRole={userRole}
           avatar={avatar}
+          onSearch={onSearch}
         />
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>

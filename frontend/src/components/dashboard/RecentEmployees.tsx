@@ -13,13 +13,22 @@ interface EmployeeSummary {
   [key: string]: unknown
 }
 
-export function RecentEmployees({ employees }: { employees: EmployeeSummary[] }) {
+export function RecentEmployees({ employees, searchQuery = "" }: { employees: EmployeeSummary[]; searchQuery?: string }) {
+  const q = searchQuery.toLowerCase()
+  const filtered = q
+    ? employees.filter((e) =>
+        [e.name, e.email, e.employee_id, e.job_title, e.role]
+          .some((v) => v?.toLowerCase().includes(q))
+      )
+    : employees
+
   return (
     <Card hover>
       <CardHeader
         title="Employee Directory"
-        subtitle="Active registered members of your team"
-        action={<button className="text-sm font-medium text-primary hover:underline">View all</button>}
+        subtitle={filtered.length === employees.length
+          ? "Active registered members of your team"
+          : `${filtered.length} of ${employees.length} members match`}
       />
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-sm">
@@ -32,7 +41,7 @@ export function RecentEmployees({ employees }: { employees: EmployeeSummary[] })
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {employees.map((emp) => (
+            {filtered.map((emp) => (
               <tr key={emp.id} className="transition-colors hover:bg-muted">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
@@ -61,10 +70,10 @@ export function RecentEmployees({ employees }: { employees: EmployeeSummary[] })
                 </td>
               </tr>
             ))}
-            {employees.length === 0 && (
+            {filtered.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-5 py-8 text-center text-muted-foreground">
-                  No employees registered yet.
+                  {q ? "No employees match your search" : "No employees registered yet."}
                 </td>
               </tr>
             )}
