@@ -23,8 +23,14 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const res = await login(email, password, role)
-      const targetRole = (res.role || role) === "admin" ? "admin" : "employee"
-      navigate(targetRole === "admin" ? "/admin" : "/employee")
+      const actualRole = (res.role || role) === "admin" ? "admin" : "employee"
+      if (actualRole !== role) {
+        setError(role === "admin"
+          ? "This account does not have admin access. Select the employee tab."
+          : "This account has admin access. Select the admin tab.")
+        return
+      }
+      navigate(actualRole === "admin" ? "/admin" : "/employee")
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Login failed"
       if (err instanceof TypeError || msg.includes("Failed to fetch")) {

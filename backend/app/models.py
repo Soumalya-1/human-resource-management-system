@@ -63,3 +63,22 @@ class Payroll(Base):
     net_salary = Column(Float, default=0.0)
 
     user = relationship("User", back_populates="payroll")
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String, nullable=False)
+    detail = Column(String, nullable=True)
+    unread = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=func.now())
+
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    type = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    time = Column(DateTime, default=func.now())

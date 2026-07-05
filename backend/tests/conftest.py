@@ -48,6 +48,8 @@ app.dependency_overrides[get_db] = override_get_db
 def _clear_db():
     db = TestingSessionLocal()
     try:
+        db.query(models.Notification).delete()
+        db.query(models.ActivityLog).delete()
         db.query(models.Attendance).delete()
         db.query(models.Leave).delete()
         db.query(models.Payroll).delete()

@@ -7,7 +7,9 @@ import { AttendanceSummary } from "@/components/dashboard/AttendanceSummary"
 import { LeaveRequestsCard } from "@/components/dashboard/LeaveRequestsCard"
 import { RecentEmployees } from "@/components/dashboard/RecentEmployees"
 import { QuickActions } from "@/components/dashboard/QuickActions"
-import { getProfile, getUsers } from "@/lib/api"
+import { AddEmployeeModal } from "@/components/modals/AddEmployeeModal"
+import { EditEmployeeModal } from "@/components/modals/EditEmployeeModal"
+import { getProfile, getUsers, getDashboardStats } from "@/lib/api"
 
 export default function AdminDashboard() {
   const [admin, setAdmin] = useState<{ name?: string | null; role?: string | null; profile_picture?: string | null; [key: string]: unknown } | null>(null)
@@ -15,14 +17,32 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [editEmployeeId, setEditEmployeeId] = useState<number | null>(null)
+  const [stats, setStats] = useState<{ present_today: string; on_leave_today: string; open_positions: string }>({
+    present_today: "—",
+    on_leave_today: "—",
+    open_positions: "—",
+  })
 
   async function loadData(cancelled?: { v: boolean }) {
     try {
       const [profileData, usersData] = await Promise.all([getProfile(), getUsers()])
-      if (!cancelled?.v) { setAdmin(profileData); setEmployees(usersData); setLoading(false) }
+      if (!cancelled?.v) { setAdmin(profileData); setEmployees(usersData) }
     } catch (err: unknown) {
-      if (!cancelled?.v) { setError(err instanceof Error ? err.message : "Failed to load dashboard"); setLoading(false) }
+      if (!cancelled?.v) { setError(err instanceof Error ? err.message : "Failed to load dashboard") }
     }
+    try {
+      const s = await getDashboardStats()
+      if (!cancelled?.v) {
+        setStats({
+          present_today: String(s.present_today ?? "—"),
+          on_leave_today: String(s.on_leave_today ?? "—"),
+          open_positions: String(s.open_positions ?? "—"),
+        })
+      }
+    } catch { /* stats are optional */ }
+    if (!cancelled?.v) setLoading(false)
   }
 
   useEffect(() => {
@@ -31,10 +51,22 @@ export default function AdminDashboard() {
     return () => { c.v = true }
   }, [])
 
+  function exportCSV() {
+    const headers = ["Name", "Email", "Role", "Job Title", "Employee ID"]
+    const rows = employees.map((e: Record<string, unknown>) =>
+      [e.name || "", e.email || "", e.role || "", e.job_title || "", e.employee_id || ""]
+    )
+    const csv = [headers.join(","), ...rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))].join("\n")
+    const blob = new Blob([csv], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = "employees.csv"; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (loading) return <div className="p-8 text-center">Loading Admin Dashboard...</div>
 
-  // Dynamically count total employees from PostgreSQL
-  const totalEmployeesCount = employees.length > 0 ? employees.length : 0
+  const totalEmployeesCount = employees.length
 
   return (
     <DashboardLayout
@@ -50,7 +82,6 @@ export default function AdminDashboard() {
             {error}
           </div>
         )}
-        {/* Page header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance">
@@ -61,26 +92,24 @@ export default function AdminDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="md">
+            <Button variant="outline" size="md" onClick={exportCSV}>
               <Download className="h-4 w-4" />
               Export
             </Button>
-            <Button size="md">
+            <Button size="md" onClick={() => setShowAddModal(true)}>
               <UserPlus className="h-4 w-4" />
               Add Employee
             </Button>
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total Employees" value={totalEmployeesCount.toString()} change={`+${totalEmployeesCount}`} trend="up" icon="users" />
-          <StatCard label="Present Today" value="—" change="—" trend="up" icon="check" />
-          <StatCard label="On Leave" value="—" change="—" trend="down" icon="calendar" />
-          <StatCard label="Open Positions" value="—" change="—" trend="up" icon="briefcase" />
+          <StatCard label="Total Employees" value={String(totalEmployeesCount)} change={`+${totalEmployeesCount}`} trend="up" icon="users" />
+          <StatCard label="Present Today" value={stats.present_today} change="—" trend="up" icon="check" />
+          <StatCard label="On Leave" value={stats.on_leave_today} change="—" trend="down" icon="calendar" />
+          <StatCard label="Open Positions" value={stats.open_positions} change="—" trend="up" icon="briefcase" />
         </div>
 
-        {/* Middle row */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <AttendanceSummary />
@@ -88,15 +117,25 @@ export default function AdminDashboard() {
           <LeaveRequestsCard />
         </div>
 
-        {/* Bottom row */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            {/* Pass the dynamic employee directory into the table */}
-            <RecentEmployees employees={employees} searchQuery={searchQuery} />
+            <RecentEmployees employees={employees} searchQuery={searchQuery} onSelectEmployee={(id) => setEditEmployeeId(id)} />
           </div>
           <QuickActions onEmployeeCreated={() => loadData()} />
         </div>
       </div>
+
+      <AddEmployeeModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => { setShowAddModal(false); loadData() }}
+      />
+      <EditEmployeeModal
+        open={editEmployeeId !== null}
+        userId={editEmployeeId ?? 0}
+        onClose={() => setEditEmployeeId(null)}
+        onSuccess={() => { setEditEmployeeId(null); loadData() }}
+      />
     </DashboardLayout>
   )
 }

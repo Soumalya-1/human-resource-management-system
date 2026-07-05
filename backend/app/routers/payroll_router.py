@@ -7,6 +7,9 @@ from app import models, schemas, auth
 from app.database import get_db
 from app.utils import is_privileged
 
+def log_activity(db, user_id: int, type: str, title: str):
+    db.add(models.ActivityLog(user_id=user_id, type=type, title=title))
+
 router = APIRouter(prefix="/api/payroll", tags=["Payroll"])
 
 @router.get("/me")
@@ -43,7 +46,11 @@ def update_payroll(user_id: int, data: schemas.PayrollUpdate, db: Session = Depe
             setattr(payroll, key, value)
         payroll.net_salary = net_salary
 
+    employee = db.query(models.User).filter(models.User.id == user_id).first()
+    employee_name = employee.name if employee else f"User #{user_id}"
     try:
+        db.commit()
+        log_activity(db, admin.id, "payroll", f"Updated payroll for {employee_name}")
         db.commit()
     except SQLAlchemyError:
         db.rollback()

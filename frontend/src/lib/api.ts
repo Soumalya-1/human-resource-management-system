@@ -250,3 +250,90 @@ export async function getPayrolls() {
 export async function updatePayroll(userId: number, data: { basic_salary: number; allowances: number; deductions: number }) {
   return await apiUpdatePayroll(userId, data);
 }
+
+// --- New API functions for stats, notifications, activity, leaves ---
+
+export async function apiGetDashboardStats() {
+  return request('/api/dashboard/stats');
+}
+
+export async function getDashboardStats() {
+  try { return await apiGetDashboardStats(); } catch (err) {
+    if (isNetworkError(err)) return { total_employees: 0, present_today: 0, on_leave_today: 0, open_positions: 0 };
+    throw err;
+  }
+}
+
+export async function apiGetLeaveBalance() {
+  return request('/api/leaves/balance');
+}
+
+export async function getLeaveBalance() {
+  try { return await apiGetLeaveBalance(); } catch (err) {
+    if (isNetworkError(err)) return { paid: { total: 20, used: 0, remaining: 20 }, sick: { total: 10, used: 0, remaining: 10 }, unpaid: { total: 5, used: 0, remaining: 5 } };
+    throw err;
+  }
+}
+
+export async function apiGetNotifications() {
+  return request('/api/notifications/');
+}
+
+export async function getNotifications() {
+  try { return await apiGetNotifications(); } catch (err) {
+    if (isNetworkError(err)) return [];
+    throw err;
+  }
+}
+
+export async function apiGetUnreadCount() {
+  return request('/api/notifications/unread-count');
+}
+
+export async function getUnreadCount() {
+  try { return await apiGetUnreadCount(); } catch (err) {
+    if (isNetworkError(err)) return { count: 0 };
+    throw err;
+  }
+}
+
+export async function apiMarkNotificationsRead() {
+  return request('/api/notifications/read', { method: 'PATCH' });
+}
+
+export async function markNotificationsRead() {
+  try { return await apiMarkNotificationsRead(); } catch (err) {
+    if (isNetworkError(err)) return { message: 'ok' };
+    throw err;
+  }
+}
+
+export async function apiGetActivity() {
+  return request('/api/activity/');
+}
+
+export async function getActivity() {
+  try { return await apiGetActivity(); } catch (err) {
+    if (isNetworkError(err)) return [];
+    throw err;
+  }
+}
+
+export async function apiUpdateProfile(data: { phone?: string; address?: string; profile_picture?: string }) {
+  return request('/api/profile/me', { method: 'PATCH', body: JSON.stringify(data) });
+}
+
+export async function updateProfile(data: { phone?: string; address?: string; profile_picture?: string }) {
+  try { return await apiUpdateProfile(data); } catch (err) {
+    if (isNetworkError(err)) return data;
+    throw err;
+  }
+}
+
+export async function apiAdminUpdateUser(userId: number, data: Record<string, unknown>) {
+  return request(`/api/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(data) });
+}
+
+export async function adminUpdateUser(userId: number, data: Record<string, unknown>) {
+  return await apiAdminUpdateUser(userId, data);
+}

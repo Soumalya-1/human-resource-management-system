@@ -6,6 +6,9 @@ from typing import List
 from app import models, schemas, auth
 from app.database import get_db
 
+def log_activity(db, user_id: int, type: str, title: str):
+    db.add(models.ActivityLog(user_id=user_id, type=type, title=title))
+
 router = APIRouter(prefix="/api", tags=["Profile"])
 
 @router.get("/profile/me", response_model=schemas.UserResponse)
@@ -21,6 +24,8 @@ def update_my_profile(profile_data: schemas.UserUpdateEmployee, db: Session = De
     if profile_data.profile_picture is not None:
         current_user.profile_picture = profile_data.profile_picture
     try:
+        db.commit()
+        log_activity(db, current_user.id, "profile", "Updated profile")
         db.commit()
     except SQLAlchemyError:
         db.rollback()

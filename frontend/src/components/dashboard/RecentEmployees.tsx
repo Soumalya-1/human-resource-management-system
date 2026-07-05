@@ -13,7 +13,7 @@ interface EmployeeSummary {
   [key: string]: unknown
 }
 
-export function RecentEmployees({ employees, searchQuery = "" }: { employees: EmployeeSummary[]; searchQuery?: string }) {
+export function RecentEmployees({ employees, searchQuery = "", onSelectEmployee }: { employees: EmployeeSummary[]; searchQuery?: string; onSelectEmployee?: (id: number) => void }) {
   const q = searchQuery.toLowerCase()
   const filtered = q
     ? employees.filter((e) =>
@@ -42,7 +42,11 @@ export function RecentEmployees({ employees, searchQuery = "" }: { employees: Em
           </thead>
           <tbody className="divide-y divide-border">
             {filtered.map((emp) => (
-              <tr key={emp.id} className="transition-colors hover:bg-muted">
+              <tr
+                key={emp.id}
+                className="cursor-pointer transition-colors hover:bg-muted"
+                onClick={() => onSelectEmployee?.(emp.id)}
+              >
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
                     <Avatar

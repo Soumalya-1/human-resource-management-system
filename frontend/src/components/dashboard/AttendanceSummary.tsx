@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardHeader } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
+import { getAuthToken, API_BASE } from "@/lib/api"
 
 interface AttendanceRow {
   date: string
@@ -16,7 +17,6 @@ export function AttendanceSummary() {
     let cancelled = false
     async function load() {
       try {
-        const { getAuthToken, API_BASE } = await import("@/lib/api")
         const token = getAuthToken()
         if (!token) { if (!cancelled) setLoading(false); return }
 

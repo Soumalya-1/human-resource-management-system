@@ -8,7 +8,7 @@ interface LeaveBalanceItem {
   color: string
 }
 
-export function LeaveBalance({ leaves }: { leaves?: LeaveBalanceItem[] }) {
+export function LeaveBalance({ leaves, onRequest }: { leaves?: LeaveBalanceItem[]; onRequest?: () => void }) {
   const items = leaves && leaves.length > 0 ? leaves : null
 
   return (
@@ -16,7 +16,11 @@ export function LeaveBalance({ leaves }: { leaves?: LeaveBalanceItem[] }) {
       <CardHeader
         title="Leave Balance"
         subtitle="Current allowance"
-        action={<Button variant="soft" size="sm">Request</Button>}
+        action={
+          <Button variant="soft" size="sm" onClick={onRequest}>
+            Request
+          </Button>
+        }
       />
       <div className="space-y-5 p-5 pt-1">
         {items ? items.map((leave) => {

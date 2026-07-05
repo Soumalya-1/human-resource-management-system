@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react"
 import { Bell } from "lucide-react"
 import { Card, CardHeader } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
+import { getNotifications } from "@/lib/api"
 
 interface NotificationItem {
   id: string
@@ -9,7 +11,19 @@ interface NotificationItem {
   unread: boolean
 }
 
-export function Notifications({ items }: { items?: NotificationItem[] }) {
+export function Notifications({ items: propItems }: { items?: NotificationItem[] }) {
+  const [items, setItems] = useState<NotificationItem[] | null>(propItems ?? null)
+  const [loading, setLoading] = useState(!propItems)
+
+  useEffect(() => {
+    if (propItems) { setItems(propItems); setLoading(false); return }
+    let cancelled = false
+    getNotifications().then((data: NotificationItem[]) => {
+      if (!cancelled) { setItems(data); setLoading(false) }
+    }).catch(() => { if (!cancelled) { setItems([]); setLoading(false) } })
+    return () => { cancelled = true }
+  }, [propItems])
+
   const notifications = items || []
   const unread = notifications.filter((n) => n.unread).length
 
@@ -21,7 +35,10 @@ export function Notifications({ items }: { items?: NotificationItem[] }) {
         action={unread > 0 ? <Badge tone="primary">{unread} new</Badge> : undefined}
       />
       <div className="space-y-1 px-2 pb-3">
-        {notifications.length === 0 && (
+        {loading && (
+          <div className="px-3 py-6 text-center text-sm text-muted-foreground">Loading...</div>
+        )}
+        {!loading && notifications.length === 0 && (
           <div className="px-3 py-6 text-center text-sm text-muted-foreground">
             No new notifications
           </div>

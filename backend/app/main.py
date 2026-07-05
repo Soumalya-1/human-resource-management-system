@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from app import models
 from app.database import engine
 from app.config import settings
-from app.routers import auth_router, users_router, attendance_router, leaves_router, payroll_router
+from app.routers import auth_router, users_router, attendance_router, leaves_router, payroll_router, notifications_router, activity_router, dashboard_router
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -39,6 +39,9 @@ app.include_router(users_router.router)
 app.include_router(attendance_router.router)
 app.include_router(leaves_router.router)
 app.include_router(payroll_router.router)
+app.include_router(notifications_router.router)
+app.include_router(activity_router.router)
+app.include_router(dashboard_router.router)
 
 @app.get("/")
 def root():

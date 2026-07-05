@@ -72,6 +72,7 @@ class LeaveResponse(LeaveApply):
     user_id: int
     status: str
     admin_comments: Optional[str]
+    user_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -88,3 +89,38 @@ class PayrollUpdate(BaseModel):
         if 'basic_salary' in data and 'allowances' in data and v > data['basic_salary'] + data['allowances']:
             raise ValueError('Deductions cannot exceed basic salary + allowances')
         return v
+
+class NotificationResponse(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    detail: Optional[str] = None
+    unread: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ActivityLogResponse(BaseModel):
+    id: int
+    user_id: int
+    type: str
+    title: str
+    time: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class DashboardStats(BaseModel):
+    total_employees: int
+    present_today: int
+    on_leave_today: int
+    open_positions: int
+
+class LeaveBalanceItem(BaseModel):
+    total: int
+    used: int
+    remaining: int
+
+class LeaveBalanceResponse(BaseModel):
+    paid: LeaveBalanceItem
+    sick: LeaveBalanceItem
+    unpaid: LeaveBalanceItem

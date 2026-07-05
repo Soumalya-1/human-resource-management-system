@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react"
 import { Clock, FileText, UserCog, Wallet } from "lucide-react"
 import { Card, CardHeader } from "@/components/ui/Card"
+import { getActivity } from "@/lib/api"
 
-const iconMap = {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   attendance: Clock,
   leave: FileText,
   profile: UserCog,
@@ -10,19 +12,46 @@ const iconMap = {
 
 interface ActivityItem {
   id: string
-  type: keyof typeof iconMap
+  type: string
   title: string
   time: string
 }
 
-export function RecentActivity({ items }: { items?: ActivityItem[] }) {
+function formatTime(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 1) return "Just now"
+  if (diffMin < 60) return `${diffMin} min ago`
+  const diffH = Math.floor(diffMin / 60)
+  if (diffH < 24) return `${diffH}h ago`
+  return d.toLocaleDateString()
+}
+
+export function RecentActivity({ items: propItems }: { items?: ActivityItem[] }) {
+  const [items, setItems] = useState<ActivityItem[] | null>(propItems ?? null)
+  const [loading, setLoading] = useState(!propItems)
+
+  useEffect(() => {
+    if (propItems) { setItems(propItems); setLoading(false); return }
+    let cancelled = false
+    getActivity().then((data: ActivityItem[]) => {
+      if (!cancelled) { setItems(data); setLoading(false) }
+    }).catch(() => { if (!cancelled) { setItems([]); setLoading(false) } })
+    return () => { cancelled = true }
+  }, [propItems])
+
   const activities = items || []
 
   return (
     <Card hover className="h-full">
       <CardHeader title="Recent Activity" subtitle="Your latest actions" />
       <div className="px-5 pb-5 pt-1">
-        {activities.length === 0 && (
+        {loading && (
+          <div className="py-6 text-center text-sm text-muted-foreground">Loading...</div>
+        )}
+        {!loading && activities.length === 0 && (
           <div className="py-6 text-center text-sm text-muted-foreground">
             No recent activity
           </div>
@@ -36,7 +65,7 @@ export function RecentActivity({ items }: { items?: ActivityItem[] }) {
                   <Icon className="h-3.5 w-3.5" />
                 </span>
                 <p className="text-sm font-medium text-foreground">{item.title}</p>
-                <p className="text-xs text-muted-foreground">{item.time}</p>
+                <p className="text-xs text-muted-foreground">{formatTime(item.time)}</p>
               </li>
             )
           })}

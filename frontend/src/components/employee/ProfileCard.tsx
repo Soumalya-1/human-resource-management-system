@@ -1,9 +1,13 @@
-import { Mail, Phone, MapPin, User2, Building2 } from "lucide-react"
+import { useState } from "react"
+import { Mail, Phone, MapPin, User2, Building2, Pencil } from "lucide-react"
 import { Card } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
 import { Avatar } from "@/components/ui/Avatar"
+import { Button } from "@/components/ui/Button"
+import { updateProfile } from "@/lib/api"
 
 interface UserProfile {
+  id?: number
   name?: string | null
   email?: string | null
   phone?: string | null
@@ -15,6 +19,26 @@ interface UserProfile {
 }
 
 export function ProfileCard({ user }: { user?: UserProfile | null }) {
+  const [editing, setEditing] = useState(false)
+  const [phone, setPhone] = useState(user?.phone || "")
+  const [address, setAddress] = useState(user?.address || "")
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+
+  async function handleSave() {
+    setSaving(true)
+    setMsg(null)
+    try {
+      await updateProfile({ phone: phone || undefined, address: address || undefined })
+      setEditing(false)
+      setMsg("Profile updated")
+    } catch (err: unknown) {
+      setMsg(err instanceof Error ? err.message : "Update failed")
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const rows = [
     { icon: Mail, label: "Email", value: user?.email || "N/A" },
     { icon: Phone, label: "Phone", value: user?.phone || "Not provided" },
@@ -33,8 +57,12 @@ export function ProfileCard({ user }: { user?: UserProfile | null }) {
             size="xl"
             className="ring-4 ring-card bg-white"
           />
-          <div className="pb-1">
+          <div className="flex flex-1 items-center justify-between pb-1">
             <Badge tone="success">Active</Badge>
+            <Button variant="ghost" size="sm" onClick={() => { setEditing(!editing); setMsg(null) }}>
+              <Pencil className="h-3.5 w-3.5" />
+              {editing ? "Cancel" : "Edit"}
+            </Button>
           </div>
         </div>
         <div className="mt-3">
@@ -56,13 +84,30 @@ export function ProfileCard({ user }: { user?: UserProfile | null }) {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <row.icon className="h-4 w-4" />
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <dt className="text-xs text-muted-foreground">{row.label}</dt>
-                <dd className="truncate text-sm font-medium text-foreground">{row.value}</dd>
+                {editing && (row.label === "Phone" || row.label === "Address") ? (
+                  <input
+                    className="mt-0.5 w-full rounded-lg border border-border bg-background px-2 py-1 text-sm font-medium text-foreground"
+                    value={row.label === "Phone" ? phone : address}
+                    onChange={(e) => row.label === "Phone" ? setPhone(e.target.value) : setAddress(e.target.value)}
+                  />
+                ) : (
+                  <dd className="truncate text-sm font-medium text-foreground">{row.value}</dd>
+                )}
               </div>
             </div>
           ))}
         </dl>
+
+        {editing && (
+          <div className="mt-4 flex items-center gap-3">
+            <Button size="sm" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+            {msg && <span className="text-xs text-muted-foreground">{msg}</span>}
+          </div>
+        )}
       </div>
     </Card>
   )

@@ -9,6 +9,9 @@ from app.database import get_db
 from app import auth
 from app.utils import is_privileged
 
+def log_activity(db, user_id: int, type: str, title: str):
+    db.add(models.ActivityLog(user_id=user_id, type=type, title=title))
+
 router = APIRouter(prefix="/api/attendance", tags=["Attendance"])
 
 def _today():
@@ -34,6 +37,9 @@ def check_in(db: Session = Depends(get_db), current_user: models.User = Depends(
     db.add(new_att)
     try:
         db.commit()
+        log_activity(db, current_user.id, "attendance",
+            f"Checked in at {datetime.now(timezone.utc).strftime('%I:%M %p')}")
+        db.commit()
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=400, detail="Could not check in")
@@ -57,6 +63,9 @@ def check_out(db: Session = Depends(get_db), current_user: models.User = Depends
     if attendance.status not in ("Half-day", "Leave"):
         attendance.status = "Present"
     try:
+        db.commit()
+        log_activity(db, current_user.id, "attendance",
+            f"Checked out at {datetime.now(timezone.utc).strftime('%I:%M %p')}")
         db.commit()
     except SQLAlchemyError:
         db.rollback()

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { Modal } from "@/components/ui/Modal"
 import { Button } from "@/components/ui/Button"
-import { getPayrolls, updatePayroll } from "@/lib/api"
+import { getPayrolls, updatePayroll, getUsers } from "@/lib/api"
 
 interface PayrollRecord {
   id: number
@@ -15,6 +15,14 @@ interface PayrollRecord {
   net_salary: number
 }
 
+interface UserRecord {
+  id: number
+  name?: string | null
+  employee_id?: string
+}
+
+type PayrollMap = Record<number, PayrollRecord>
+
 export function PayrollModal({
   open,
   onClose,
@@ -22,7 +30,8 @@ export function PayrollModal({
   open: boolean
   onClose: () => void
 }) {
-  const [records, setRecords] = useState<PayrollRecord[]>([])
+  const [payrollMap, setPayrollMap] = useState<PayrollMap>({})
+  const [users, setUsers] = useState<UserRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -32,22 +41,34 @@ export function PayrollModal({
     let cancelled = false
     setLoading(true)
     setError(null)
-    getPayrolls().then((data: PayrollRecord[]) => {
-      if (!cancelled) { setRecords(data); setLoading(false) }
+    Promise.all([getPayrolls(), getUsers()]).then(([payrolls, allUsers]) => {
+      if (cancelled) return
+      const map: PayrollMap = {}
+      for (const p of payrolls as PayrollRecord[]) {
+        map[p.user_id] = p
+      }
+      setPayrollMap(map)
+      setUsers(allUsers as UserRecord[])
+      setLoading(false)
     }).catch(() => {
-      if (!cancelled) { setError("Failed to load payroll data"); setLoading(false) }
+      if (!cancelled) { setError("Failed to load data"); setLoading(false) }
     })
     return () => { cancelled = true }
   }, [open])
 
   function updateField(userId: number, field: "basic_salary" | "allowances" | "deductions", value: number) {
-    setRecords((prev) =>
-      prev.map((r) => (r.user_id === userId ? { ...r, [field]: value } : r))
-    )
+    setPayrollMap((prev) => {
+      const rec = prev[userId]
+      if (!rec) {
+        const user = users.find((u) => u.id === userId)
+        return { ...prev, [userId]: { id: 0, user_id: userId, name: user?.name, employee_id: user?.employee_id, basic_salary: 0, allowances: 0, deductions: 0, net_salary: 0, [field]: value } }
+      }
+      return { ...prev, [userId]: { ...rec, [field]: value } }
+    })
   }
 
   async function handleSave(userId: number) {
-    const record = records.find((r) => r.user_id === userId)
+    const record = payrollMap[userId]
     if (!record) return
     setSaving(userId)
     setError(null)
@@ -57,12 +78,24 @@ export function PayrollModal({
         allowances: record.allowances,
         deductions: record.deductions,
       })
+      const updated = await getPayrolls()
+      const map: PayrollMap = {}
+      for (const p of updated as PayrollRecord[]) {
+        map[p.user_id] = p
+      }
+      setPayrollMap((prev) => ({ ...prev, ...map }))
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Save failed")
     } finally {
       setSaving(null)
     }
   }
+
+  const allEmployees = users.filter((u) => u.id).sort((a, b) => {
+    const aHas = payrollMap[a.id] !== undefined ? 0 : 1
+    const bHas = payrollMap[b.id] !== undefined ? 0 : 1
+    return aHas - bHas
+  })
 
   return (
     <Modal open={open} onClose={onClose} title="Payroll">
@@ -73,56 +106,64 @@ export function PayrollModal({
         </div>
       )}
       {error && <p className="mb-3 text-xs text-[var(--color-danger)]">{error}</p>}
-      {!loading && records.length === 0 && (
+      {!loading && allEmployees.length === 0 && (
         <div className="py-8 text-center text-sm text-muted-foreground">
-          No payroll records yet. Set salaries for employees above.
+          No employees found.
         </div>
       )}
-      {!loading && records.map((rec) => (
-        <div key={rec.user_id} className="rounded-xl border border-border p-4 mb-3">
-          <p className="text-sm font-medium text-foreground mb-2">
-            {rec.name || `User #${rec.user_id}`}
-            {rec.employee_id && <span className="ml-2 text-xs text-muted-foreground">({rec.employee_id})</span>}
-          </p>
-          <div className="grid grid-cols-3 gap-3 mb-3">
-            <div>
-              <label className="text-xs text-muted-foreground">Basic</label>
-              <input
-                type="number"
-                value={rec.basic_salary}
-                onChange={(e) => updateField(rec.user_id, "basic_salary", Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
-              />
+      {!loading && allEmployees.map((user) => {
+        const rec = payrollMap[user.id]
+        const hasPayroll = rec !== undefined
+        const b = hasPayroll ? rec.basic_salary : 0
+        const a = hasPayroll ? rec.allowances : 0
+        const d = hasPayroll ? rec.deductions : 0
+        return (
+          <div key={user.id} className="rounded-xl border border-border p-4 mb-3">
+            <p className="text-sm font-medium text-foreground mb-2">
+              {user.name || `User #${user.id}`}
+              {user.employee_id && <span className="ml-2 text-xs text-muted-foreground">({user.employee_id})</span>}
+              {!hasPayroll && <span className="ml-2 text-xs text-amber-600">— no salary set</span>}
+            </p>
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Basic</label>
+                <input
+                  type="number"
+                  value={b}
+                  onChange={(e) => updateField(user.id, "basic_salary", Number(e.target.value))}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Allowances</label>
+                <input
+                  type="number"
+                  value={a}
+                  onChange={(e) => updateField(user.id, "allowances", Number(e.target.value))}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Deductions</label>
+                <input
+                  type="number"
+                  value={d}
+                  onChange={(e) => updateField(user.id, "deductions", Number(e.target.value))}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Allowances</label>
-              <input
-                type="number"
-                value={rec.allowances}
-                onChange={(e) => updateField(rec.user_id, "allowances", Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Deductions</label>
-              <input
-                type="number"
-                value={rec.deductions}
-                onChange={(e) => updateField(rec.user_id, "deductions", Number(e.target.value))}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
-              />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                Net: <strong className="text-foreground">{(b + a - d).toLocaleString()}</strong>
+              </span>
+              <Button size="sm" onClick={() => handleSave(user.id)} disabled={saving === user.id}>
+                {saving === user.id ? "Saving..." : hasPayroll ? "Save" : "Set Salary"}
+              </Button>
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              Net: <strong className="text-foreground">{(rec.basic_salary + rec.allowances - rec.deductions).toLocaleString()}</strong>
-            </span>
-            <Button size="sm" onClick={() => handleSave(rec.user_id)} disabled={saving === rec.user_id}>
-              {saving === rec.user_id ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </Modal>
   )
 }

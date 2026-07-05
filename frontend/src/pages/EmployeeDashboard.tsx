@@ -7,7 +7,7 @@ import { CalendarCard } from "@/components/employee/CalendarCard"
 import { Notifications } from "@/components/employee/Notifications"
 import { RecentActivity } from "@/components/employee/RecentActivity"
 import { LeaveRequestForm } from "@/components/employee/LeaveRequestForm"
-import { getProfile } from "@/lib/api"
+import { getProfile, getLeaveBalance, getNotifications, getActivity, getLeaves } from "@/lib/api"
 
 interface ProfileData {
   name?: string | null
@@ -17,20 +17,60 @@ interface ProfileData {
   [key: string]: unknown
 }
 
+interface LeaveRecord {
+  id: number
+  leave_type: string
+  start_date: string
+  end_date: string
+  status: string
+}
+
 export default function EmployeeDashboard() {
   const [user, setUser] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [leaveBalance, setLeaveBalance] = useState<{ paid: { total: number; used: number; remaining: number }; sick: { total: number; used: number; remaining: number }; unpaid: { total: number; used: number; remaining: number } } | null>(null)
+  const [leaves, setLeaves] = useState<LeaveRecord[]>([])
+  const [notifications, setNotifications] = useState<{ id: string; title: string; detail: string; unread: boolean }[]>([])
+  const [activity, setActivity] = useState<{ id: string; type: string; title: string; time: string }[]>([])
 
   useEffect(() => {
     let cancelled = false
-    getProfile().then((data) => {
-      if (!cancelled) { setUser(data); setLoading(false) }
-    }).catch((err: unknown) => {
-      if (!cancelled) { setError(err instanceof Error ? err.message : "Failed to load profile"); setLoading(false) }
-    })
+    async function load() {
+      try {
+        const data = await getProfile()
+        if (!cancelled) setUser(data)
+      } catch (err: unknown) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load profile")
+      }
+      try {
+        const [lb, l, n, a] = await Promise.allSettled([
+          getLeaveBalance(), getLeaves(), getNotifications(), getActivity()
+        ])
+        if (!cancelled) {
+          if (lb.status === "fulfilled") setLeaveBalance(lb.value)
+          if (l.status === "fulfilled") setLeaves(l.value.filter((r: LeaveRecord) => r.status === "Approved"))
+          if (n.status === "fulfilled") setNotifications(n.value.map((item: { id: number; title: string; detail?: string; unread: boolean; created_at: string }) => ({
+            id: String(item.id), title: item.title, detail: item.detail || "", unread: item.unread
+          })))
+          if (a.status === "fulfilled") setActivity(a.value.map((item: { id: number; type: string; title: string; time: string }) => ({
+            id: String(item.id), type: item.type, title: item.title, time: item.time
+          })))
+        }
+      } catch { /* ignore */ }
+      if (!cancelled) setLoading(false)
+    }
+    load()
     return () => { cancelled = true }
   }, [])
+
+  const leaveBalanceItems = leaveBalance
+    ? [
+        { label: "Paid Leave", total: leaveBalance.paid.total, used: leaveBalance.paid.used, color: "#6366f1" },
+        { label: "Sick Leave", total: leaveBalance.sick.total, used: leaveBalance.sick.used, color: "#f59e0b" },
+        { label: "Unpaid Leave", total: leaveBalance.unpaid.total, used: leaveBalance.unpaid.used, color: "#ef4444" },
+      ]
+    : undefined
 
   if (loading) return <div className="p-8 text-center">Loading your dashboard...</div>
 
@@ -57,29 +97,27 @@ export default function EmployeeDashboard() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Left column: profile */}
           <div className="lg:col-span-1">
-            {/* Pass the real user data into the Profile Card */}
             <ProfileCard user={user} />
           </div>
 
-          {/* Right columns */}
           <div className="space-y-6 lg:col-span-2">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <AttendanceWidget />
-              <LeaveBalance />
+              <LeaveBalance leaves={leaveBalanceItems} onRequest={() => document.getElementById("leave-request-form")?.scrollIntoView({ behavior: "smooth" })} />
             </div>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <CalendarCard />
-              <Notifications />
+              <CalendarCard leaves={leaves} />
+              <Notifications items={notifications} />
             </div>
           </div>
         </div>
 
-        {/* Live action: Request Leave */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <LeaveRequestForm />
-          <RecentActivity />
+          <div id="leave-request-form">
+            <LeaveRequestForm />
+          </div>
+          <RecentActivity items={activity} />
         </div>
       </div>
     </DashboardLayout>

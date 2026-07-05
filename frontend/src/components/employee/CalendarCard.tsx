@@ -4,17 +4,37 @@ import { cn } from "@/lib/utils"
 
 const dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
 
-export function CalendarCard() {
-  const { year, month, daysInMonth, startOffset, today } = useMemo(() => {
+interface LeaveSummary {
+  start_date: string
+  end_date: string
+  leave_type: string
+}
+
+export function CalendarCard({ leaves }: { leaves?: LeaveSummary[] }) {
+  const { year, month, daysInMonth, startOffset, today, leaveDates } = useMemo(() => {
     const now = new Date()
     const y = now.getFullYear()
-    const m = now.toLocaleString("default", { month: "long", year: "numeric" })
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+    const m = now.getMonth()
+    const mLabel = now.toLocaleString("default", { month: "long", year: "numeric" })
+    const firstDay = new Date(y, m, 1)
     const offset = firstDay.getDay()
-    const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    const days = new Date(y, m + 1, 0).getDate()
     const day = now.getDate()
-    return { year: y, month: m, daysInMonth: days, startOffset: offset, today: day }
-  }, [])
+
+    const ld = new Set<string>()
+    if (leaves) {
+      for (const lv of leaves) {
+        const s = new Date(lv.start_date)
+        const e = new Date(lv.end_date)
+        for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+          if (d.getFullYear() === y && d.getMonth() === m) {
+            ld.add(String(d.getDate()))
+          }
+        }
+      }
+    }
+    return { year: y, month: mLabel, daysInMonth: days, startOffset: offset, today: day, leaveDates: ld }
+  }, [leaves])
 
   const cells = useMemo(
     () => [...Array(startOffset).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)],
@@ -34,6 +54,7 @@ export function CalendarCard() {
           {cells.map((day, i) => {
             if (day === null) return <div key={`e-${i}`} />
             const isToday = day === today
+            const isLeave = leaveDates.has(String(day))
             return (
               <div
                 key={day}
@@ -41,8 +62,11 @@ export function CalendarCard() {
                   "relative flex aspect-square items-center justify-center rounded-lg text-sm transition-colors",
                   isToday
                     ? "bg-primary font-semibold text-primary-foreground"
-                    : "text-foreground hover:bg-muted",
+                    : isLeave
+                      ? "bg-amber-100 font-medium text-amber-700"
+                      : "text-foreground hover:bg-muted",
                 )}
+                title={isLeave ? "On leave" : undefined}
               >
                 {day}
               </div>
