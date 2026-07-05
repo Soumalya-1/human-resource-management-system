@@ -144,6 +144,82 @@ npm run dev
 
 Open **[http://localhost:5173](http://localhost:5173)**. The first signup becomes Admin automatically.
 
+## Testing Walkthrough
+
+### 1. Sign up as Admin
+
+Open `http://localhost:5173` and click **Sign Up**. The very first user is automatically assigned the **Admin** role.
+
+| Field | Example |
+|---|---|
+| Name | `Admin User` |
+| Email | `admin@test.com` |
+| Password | `Admin123!` (≥8 chars, uppercase, lowercase, digit, special char) |
+| Confirm Password | `Admin123!` |
+
+After signup you'll be redirected to login.
+
+### 2. Login as Admin
+
+Enter `admin@test.com` / `Admin123!`. The **Admin Dashboard** shows:
+
+- Stats cards (total employees, pending leaves)
+- Employee directory (user list)
+- Leave requests to approve/reject
+- Payroll overview
+
+### 3. Sign up as Employee
+
+Open a private/incognito window, go to `http://localhost:5173`, and sign up a second user:
+
+| Field | Example |
+|---|---|
+| Name | `Jane Employee` |
+| Email | `jane@test.com` |
+| Password | `Employee1!` |
+
+Since an Admin already exists, this user gets the **Employee** role.
+
+### 4. Test Employee features
+
+Login as `jane@test.com` / `Employee1!`:
+
+| Action | How | Expected |
+|---|---|---|
+| **Check In** | Click check-in button on dashboard | Succeeds (once per day) |
+| **Check Out** | Click check-out button | Succeeds (only after check-in) |
+| **Check Out again** | Try checking out a second time | Show warning — already checked out |
+| **Apply Leave** | Go to leave form, pick future dates, select "Paid", submit | Succeeds, status "Pending" |
+| **Apply Overlapping Leave** | Try same date range again | **Rejected** — overlap detected |
+| **Apply Past Leave** | Pick yesterday's date | **Rejected** — past dates not allowed |
+| **Apply Unpaid Leave** | Pick a different future range, select "Unpaid" | Succeeds |
+| **View Profile** | Navigate to profile page | Shows your details |
+| **View Payslip** | Navigate to payroll | Shows "Not set yet" (Admin hasn't configured it) |
+
+### 5. Test Admin features
+
+Switch back to the Admin window, refresh:
+
+| Action | How | Expected |
+|---|---|---|
+| **View all employees** | Employee directory lists everyone | See both Admin and Jane |
+| **Approve leave** | Find Jane's leave in Leave Requests, click approve | Status changes to "Approved"; Jane's attendance gets auto-marked as "Leave" |
+| **Reject pending leave** | Find Jane's other leave request, click reject | Status changes to "Rejected" |
+| **Un-approve leave** | Find an approved leave, change to "Pending" | Attendance reverts from "Leave" |
+| **Set payroll** | Go to payroll section, select Jane, set Basic Salary `50000`, Allowances `10000`, Deductions `5000` | Net salary auto-calculates to `55000` |
+| **Try negative values** | Set Deductions to `-100` | **Rejected** — must be ≥ 0 |
+| **Try excessive deductions** | Set Deductions to `100000` | **Rejected** — cannot exceed salary + allowances |
+
+### 6. Test edge cases
+
+| Test | Expected |
+|---|---|
+| Login with wrong password (`admin@test.com` / `wrong`) | 401 error, no silent demo fallback |
+| Access `/api/payroll/admin` as Employee | 403 Forbidden |
+| Check out without checking in first | 400 error — not checked in |
+| Sign up with weak password (`abc`) | 422 validation error |
+| Sign up with duplicate email | 400 error — email exists |
+
 ## Accessing the Database
 
 ### Via psql (Docker)
@@ -152,7 +228,7 @@ Open **[http://localhost:5173](http://localhost:5173)**. The first signup become
 docker compose exec db psql -U hrms_user -d hrms_db
 ```
 
-### Via a GUI tool (DBeaver, pgAdmin, TablePlus)
+### Via a GUI tool (DataGrip, DBeaver, pgAdmin, TablePlus)
 
 | Setting | Value |
 |---|---|
@@ -161,6 +237,12 @@ docker compose exec db psql -U hrms_user -d hrms_db
 | Database | `hrms_db` |
 | User | `hrms_user` |
 | Password | `hrms_pass` |
+| JDBC URL (DataGrip) | `jdbc:postgresql://localhost:5433/hrms_db` |
+| SSL | `Disable` (local only) |
+
+**DataGrip setup**: File → New → Data Source → PostgreSQL. Paste the JDBC URL above or fill in the fields manually. Test Connection should succeed immediately while the container is running.
+
+**DBeaver setup**: Database → New Database Connection → PostgreSQL. Enter Host/Port/Database/User/Password as above. Download driver if prompted.
 
 ## Environment Variables
 
