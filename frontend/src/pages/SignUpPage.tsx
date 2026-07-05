@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type FormEvent, type ChangeEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Building2, User, Mail, Lock, ImagePlus, ArrowRight } from "lucide-react"
+import { User, Mail, Lock, ImagePlus, ArrowRight } from "lucide-react"
 import { AuthLayout } from "@/components/auth/AuthLayout"
 import { Input } from "@/components/ui/Input"
 import { Button } from "@/components/ui/Button"
@@ -92,13 +92,6 @@ export default function SignUpPage() {
           </div>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleLogo} className="hidden" />
         </div>
-
-        <Input
-          id="company"
-          label="Company Name"
-          placeholder="Nimbus Inc."
-          icon={<Building2 className="h-4 w-4" />}
-        />
 
         <Input
           id="employee"

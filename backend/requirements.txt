@@ -3,7 +3,7 @@ uvicorn[standard]
 sqlalchemy
 pydantic
 pydantic-settings
-passlib[bcrypt]
+bcrypt
 pyjwt
 python-multipart
 python-dotenv
