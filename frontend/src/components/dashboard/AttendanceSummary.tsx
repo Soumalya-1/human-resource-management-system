@@ -16,11 +16,11 @@ export function AttendanceSummary() {
     let cancelled = false
     async function load() {
       try {
-        const { getAuthToken } = await import("@/lib/api")
+        const { getAuthToken, API_BASE } = await import("@/lib/api")
         const token = getAuthToken()
         if (!token) { if (!cancelled) setLoading(false); return }
 
-        const res = await fetch(`/api/attendance/weekly`, {
+        const res = await fetch(`${API_BASE}/api/attendance/weekly`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (res.ok) {

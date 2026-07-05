@@ -1,10 +1,6 @@
 import { NavLink } from "react-router-dom"
 import {
   LayoutDashboard,
-  Users,
-  CalendarCheck,
-  FileText,
-  Wallet,
   Settings,
   LifeBuoy,
   X,
@@ -16,17 +12,10 @@ type Role = "admin" | "employee"
 
 const adminNav = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/admin/employees", label: "Employees", icon: Users },
-  { to: "/admin/attendance", label: "Attendance", icon: CalendarCheck },
-  { to: "/admin/leaves", label: "Leave Requests", icon: FileText },
-  { to: "/admin/payroll", label: "Payroll", icon: Wallet },
 ]
 
 const employeeNav = [
   { to: "/employee", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/employee/attendance", label: "My Attendance", icon: CalendarCheck },
-  { to: "/employee/leaves", label: "My Leaves", icon: FileText },
-  { to: "/employee/payslips", label: "Payslips", icon: Wallet },
 ]
 
 export function Sidebar({
