@@ -68,6 +68,22 @@ HRMS is a role-based system covering the full employee lifecycle: authentication
 
 ### With Docker (primary)
 
+#### 1. Set up environment files
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+#### 2. Generate a JWT secret key
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Copy the output, open `backend/.env`, and paste it over the placeholder `JWT_SECRET_KEY` value.
+
+#### 3. Launch
+
 ```bash
 docker compose up -d
 ```
@@ -78,6 +94,14 @@ This starts three containers:
 - **React frontend** on port `5173`
 
 Open **[http://localhost:5173](http://localhost:5173)** in your browser. The first user to sign up is automatically assigned the **Admin** role.
+
+### Viewing logs
+
+```bash
+docker compose logs -f          # all services
+docker compose logs -f backend  # backend only
+docker compose logs -f frontend # frontend only
+```
 
 ### Without Docker
 
@@ -101,6 +125,10 @@ Or use your preferred GUI (pgAdmin, DBeaver) to create a database named `hrms_db
 cd backend
 pip install -r requirements.txt
 cp .env.example .env          # already points to postgresql://hrms_user:hrms_pass@localhost:5433/hrms_db
+
+# Generate a JWT secret key and paste it into .env
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+
 uvicorn app.main:app --reload
 ```
 
@@ -139,7 +167,7 @@ docker compose exec db psql -U hrms_user -d hrms_db
 | Variable | Default | Description |
 |---|---|---|
 | `DATABASE_URL` | `postgresql://hrms_user:hrms_pass@localhost:5433/hrms_db` | Database connection string |
-| `JWT_SECRET_KEY` | `change-me-to-a-strong-random-secret` | JWT signing key (change in production) |
+| `JWT_SECRET_KEY` | *(generate one)* | JWT signing key — run `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
 | `ALGORITHM` | `HS256` | JWT algorithm |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `10080` | Token expiry (7 days) |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173` | Comma-separated allowed origins |
