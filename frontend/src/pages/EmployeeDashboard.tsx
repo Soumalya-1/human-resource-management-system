@@ -9,16 +9,26 @@ import { RecentActivity } from "@/components/employee/RecentActivity"
 import { LeaveRequestForm } from "@/components/employee/LeaveRequestForm"
 import { getProfile } from "@/lib/api"
 
+interface ProfileData {
+  name?: string | null
+  email?: string | null
+  role?: string | null
+  profile_picture?: string | null
+  [key: string]: unknown
+}
+
 export default function EmployeeDashboard() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Fetch the real user from FastAPI backend!
+    let cancelled = false
     getProfile().then((data) => {
-      setUser(data)
-      setLoading(false)
+      if (!cancelled) { setUser(data); setLoading(false) }
+    }).catch(() => {
+      if (!cancelled) setLoading(false)
     })
+    return () => { cancelled = true }
   }, [])
 
   if (loading) return <div className="p-8 text-center">Loading your dashboard...</div>

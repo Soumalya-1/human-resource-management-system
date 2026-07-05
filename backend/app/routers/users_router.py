@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from typing import List
 
 from app import models, schemas, auth
@@ -19,7 +20,11 @@ def update_my_profile(profile_data: schemas.UserUpdateEmployee, db: Session = De
         current_user.address = profile_data.address
     if profile_data.profile_picture is not None:
         current_user.profile_picture = profile_data.profile_picture
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not update profile")
     db.refresh(current_user)
     return current_user
 
@@ -28,7 +33,7 @@ def admin_list_users(db: Session = Depends(get_db), admin: models.User = Depends
     return db.query(models.User).all()
 
 @router.patch("/admin/users/{user_id}", response_model=schemas.UserResponse)
-def admin_update_user(user_id: int, data: schemas.UserUpdateAdmin, db: Session = Depends(get_db), admin: models.User = Depends(auth.get_admin_user)):
+def admin_update_user(user_id: int, data: schemas.UserUpdateAdmin, db: Session = Depends(get_db), admin: models.User = Depends(auth.get_admin_only_user)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -36,6 +41,10 @@ def admin_update_user(user_id: int, data: schemas.UserUpdateAdmin, db: Session =
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(user, key, value)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not update user")
     db.refresh(user)
     return user

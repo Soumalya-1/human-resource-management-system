@@ -6,7 +6,7 @@ def test_signup_generates_employee_id_and_first_is_admin():
     # Fresh DB (cleared by autouse _clear_db), first signup via API should become Admin
     resp = client.post("/api/auth/signup", json={
         "email": "first@rev.com",
-        "password": "Aa123456",
+        "password": "Aa123456!",
         "name": "First User"
     })
     assert resp.status_code == 200, resp.text
@@ -24,13 +24,13 @@ def test_signup_weak_password_rejected():
     assert resp.status_code == 422
 
 def test_signup_duplicate_email():
-    client.post("/api/auth/signup", json={"email": "dup@rev.com", "password": "Aa123456", "name": "D1"})
-    resp = client.post("/api/auth/signup", json={"email": "dup@rev.com", "password": "Aa123456", "name": "D2"})
+    client.post("/api/auth/signup", json={"email": "dup@rev.com", "password": "Aa123456!", "name": "D1"})
+    resp = client.post("/api/auth/signup", json={"email": "dup@rev.com", "password": "Aa123456!", "name": "D2"})
     assert resp.status_code == 400
 
 def test_login_success_and_fail():
-    client.post("/api/auth/signup", json={"email": "log@rev.com", "password": "Aa123456", "name": "L"})
-    ok = client.post("/api/auth/login", data={"username": "log@rev.com", "password": "Aa123456"})
+    client.post("/api/auth/signup", json={"email": "log@rev.com", "password": "Aa123456!", "name": "L"})
+    ok = client.post("/api/auth/login", data={"username": "log@rev.com", "password": "Aa123456!"})
     assert ok.status_code == 200
     bad = client.post("/api/auth/login", data={"username": "log@rev.com", "password": "wrong"})
     assert bad.status_code == 401

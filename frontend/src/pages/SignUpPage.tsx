@@ -1,6 +1,6 @@
-import { useState, useRef, type FormEvent, type ChangeEvent } from "react"
+import { useState, useRef, useEffect, type FormEvent, type ChangeEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Building2, User, Mail, Phone, Lock, ImagePlus, ArrowRight } from "lucide-react"
+import { Building2, User, Mail, Lock, ImagePlus, ArrowRight } from "lucide-react"
 import { AuthLayout } from "@/components/auth/AuthLayout"
 import { Input } from "@/components/ui/Input"
 import { Button } from "@/components/ui/Button"
@@ -13,28 +13,48 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    return () => {
+      if (logoPreview) URL.revokeObjectURL(logoPreview)
+    }
+  }, [logoPreview])
+
   function handleLogo(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (file) setLogoPreview(URL.createObjectURL(file))
+    if (file) {
+      if (logoPreview) URL.revokeObjectURL(logoPreview)
+      setLogoPreview(URL.createObjectURL(file))
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    setLoading(true)
     const form = e.currentTarget as HTMLFormElement
-    const email = (form.querySelector('#email') as HTMLInputElement)?.value || 'new@rev.com'
-    const name = (form.querySelector('#employee') as HTMLInputElement)?.value || 'New User'
-    const pass = (form.querySelector('#pass') as HTMLInputElement)?.value || 'Aa123456'
+    const formData = new FormData(form)
 
+    const name = (formData.get('employee') as string)?.trim()
+    const email = (formData.get('email') as string)?.trim()
+    const password = formData.get('pass') as string
+    const confirm = formData.get('confirm') as string
+
+    if (!name || !email || !password) {
+      setError("Name, email, and password are required.")
+      return
+    }
+
+    if (password !== confirm) {
+      setError("Passwords do not match.")
+      return
+    }
+
+    setLoading(true)
     try {
-      await apiSignup({ email, password: pass, name })
-      // Default new signups to employee view for demo
-      navigate("/employee")
-    } catch (err: any) {
-      // Still allow flow in mock mode
-      setError(err?.message || "Signup attempted (demo mode).")
-      navigate("/employee")
+      await apiSignup({ email, password, name })
+      navigate("/login")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Signup failed"
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -46,7 +66,6 @@ export default function SignUpPage() {
       subheading="Set up your company workspace and onboard your first team member."
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Logo upload */}
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -55,7 +74,7 @@ export default function SignUpPage() {
             aria-label="Upload company logo"
           >
             {logoPreview ? (
-              <img src={logoPreview || "/placeholder.svg"} alt="Company logo preview" className="h-full w-full object-cover" />
+              <img src={logoPreview} alt="Company logo preview" className="h-full w-full object-cover" />
             ) : (
               <ImagePlus className="h-6 w-6" />
             )}
@@ -79,39 +98,31 @@ export default function SignUpPage() {
           label="Company Name"
           placeholder="Nimbus Inc."
           icon={<Building2 className="h-4 w-4" />}
-          required
         />
 
         <Input
           id="employee"
+          name="employee"
           label="Employee Name"
           placeholder="Jordan Rivera"
           icon={<User className="h-4 w-4" />}
           required
         />
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Input
-            id="email"
-            label="Email"
-            type="email"
-            placeholder="jordan@nimbus.co"
-            icon={<Mail className="h-4 w-4" />}
-            required
-          />
-          <Input
-            id="phone"
-            label="Phone"
-            type="tel"
-            placeholder="+1 (555) 000-0000"
-            icon={<Phone className="h-4 w-4" />}
-            required
-          />
-        </div>
+        <Input
+          id="email"
+          name="email"
+          label="Email"
+          type="email"
+          placeholder="jordan@nimbus.co"
+          icon={<Mail className="h-4 w-4" />}
+          required
+        />
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Input
             id="pass"
+            name="pass"
             label="Password"
             type="password"
             placeholder="Create password"
@@ -120,6 +131,7 @@ export default function SignUpPage() {
           />
           <Input
             id="confirm"
+            name="confirm"
             label="Confirm Password"
             type="password"
             placeholder="Repeat password"
@@ -128,8 +140,10 @@ export default function SignUpPage() {
           />
         </div>
 
-        <Button type="submit" size="lg" className="w-full">
-          Sign Up
+        {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
+
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+          {loading ? "Creating account..." : "Sign Up"}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </form>

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app import models, schemas, auth
 from app.database import get_db
@@ -13,9 +14,7 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Auto-generate clean employee_id (REVE######). First user becomes Admin.
     employee_id = generate_next_employee_id(db)
-    # If client sent one and no conflict, allow override (for data import), else use generated
     if user.employee_id:
         existing = db.query(models.User).filter(models.User.employee_id == user.employee_id).first()
         if existing:
@@ -35,7 +34,11 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         verified=True
     )
     db.add(new_user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Email or Employee ID already exists")
     db.refresh(new_user)
     return new_user
 

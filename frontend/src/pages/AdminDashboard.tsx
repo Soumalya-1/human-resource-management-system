@@ -10,17 +10,18 @@ import { QuickActions } from "@/components/dashboard/QuickActions"
 import { getProfile, getUsers } from "@/lib/api"
 
 export default function AdminDashboard() {
-  const [admin, setAdmin] = useState<any>(null)
-  const [employees, setEmployees] = useState<any[]>([])
+  const [admin, setAdmin] = useState<{ name?: string | null; role?: string | null; profile_picture?: string | null; [key: string]: unknown } | null>(null)
+  const [employees, setEmployees] = useState<{ id: number; role: string; [key: string]: unknown }[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Fetch Admin Profile and Employee Directory concurrently
+    let cancelled = false
     Promise.all([getProfile(), getUsers()]).then(([profileData, usersData]) => {
-      setAdmin(profileData)
-      setEmployees(usersData)
-      setLoading(false)
+      if (!cancelled) { setAdmin(profileData); setEmployees(usersData); setLoading(false) }
+    }).catch(() => {
+      if (!cancelled) setLoading(false)
     })
+    return () => { cancelled = true }
   }, [])
 
   if (loading) return <div className="p-8 text-center">Loading Admin Dashboard...</div>
@@ -61,9 +62,9 @@ export default function AdminDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Total Employees" value={totalEmployeesCount.toString()} change={`+${totalEmployeesCount}`} trend="up" icon="users" />
-          <StatCard label="Present Today" value="1" change="+100%" trend="up" icon="check" />
-          <StatCard label="On Leave" value="0" change="0" trend="down" icon="calendar" />
-          <StatCard label="Open Positions" value="9" change="+2" trend="up" icon="briefcase" />
+          <StatCard label="Present Today" value="—" change="—" trend="up" icon="check" />
+          <StatCard label="On Leave" value="—" change="—" trend="down" icon="calendar" />
+          <StatCard label="Open Positions" value="—" change="—" trend="up" icon="briefcase" />
         </div>
 
         {/* Middle row */}

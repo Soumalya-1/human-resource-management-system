@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import { Menu, Search, Bell, ChevronDown, LogOut } from "lucide-react"
 import { Avatar } from "@/components/ui/Avatar"
+import { setAuthToken } from "@/lib/api"
 
 export function Navbar({
   onMenu,
@@ -11,7 +12,7 @@ export function Navbar({
   onMenu: () => void
   userName: string
   userRole: string
-  avatar: string
+  avatar?: string | null
 }) {
   const navigate = useNavigate()
 
@@ -55,7 +56,7 @@ export function Navbar({
         </div>
 
         <button
-          onClick={() => navigate("/login")}
+          onClick={() => { setAuthToken(null); navigate("/login"); }}
           className="rounded-xl p-2.5 text-muted-foreground transition-colors hover:bg-[var(--color-danger-soft)] hover:text-[var(--color-danger)]"
           aria-label="Log out"
         >

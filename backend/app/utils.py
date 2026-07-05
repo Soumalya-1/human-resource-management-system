@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func as sqlfunc
 from . import models
 import re
 from datetime import date, timedelta
@@ -6,30 +7,34 @@ from typing import Optional
 
 EMPLOYEE_ID_PREFIX = "REVE"
 EMPLOYEE_ID_WIDTH = 6
+EMPLOYEE_ID_PATTERN = re.compile(rf"^{EMPLOYEE_ID_PREFIX}(\d{{{EMPLOYEE_ID_WIDTH}}})$")
 
 def generate_next_employee_id(db: Session) -> str:
-    # Find highest existing numeric suffix
+    from sqlalchemy import func as sqlfunc
+    all_ids = db.query(models.User.employee_id).all()
     max_num = 0
-    users = db.query(models.User).all()
-    for u in users:
-        if u.employee_id and u.employee_id.startswith(EMPLOYEE_ID_PREFIX):
-            try:
-                num = int(u.employee_id[len(EMPLOYEE_ID_PREFIX):])
+    for (eid,) in all_ids:
+        if eid:
+            m = EMPLOYEE_ID_PATTERN.match(eid)
+            if m:
+                num = int(m.group(1))
                 if num > max_num:
                     max_num = num
-            except ValueError:
-                pass
     next_num = max_num + 1
     return f"{EMPLOYEE_ID_PREFIX}{next_num:0{EMPLOYEE_ID_WIDTH}d}"
 
 def is_strong_password(password: str) -> bool:
     if len(password) < 8:
         return False
+    if len(password) > 128:
+        return False
     if not re.search(r"[A-Z]", password):
         return False
     if not re.search(r"[a-z]", password):
         return False
     if not re.search(r"\d", password):
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>_\-+]", password):
         return False
     return True
 
@@ -70,4 +75,14 @@ def mark_attendance_as_leave(db: Session, user_id: int, start: date, end: date):
                 status="Leave"
             )
             db.add(att)
-    db.commit()
+
+
+def revert_attendance_from_leave(db: Session, user_id: int, start: date, end: date):
+    for d in date_range(start, end):
+        att = db.query(models.Attendance).filter(
+            models.Attendance.user_id == user_id,
+            models.Attendance.date == d,
+            models.Attendance.status == "Leave"
+        ).first()
+        if att:
+            db.delete(att)

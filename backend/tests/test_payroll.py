@@ -1,8 +1,8 @@
 from tests.conftest import client, auth_header, create_user, get_token
 
 def test_employee_can_view_own_payroll_null_or_set(create_user, get_token):
-    emp = create_user("py@rev.com", "Aa123456")
-    t = get_token("py@rev.com", "Aa123456")
+    emp = create_user("py@rev.com", "Aa123456!")
+    t = get_token("py@rev.com", "Aa123456!")
 
     r = client.get("/api/payroll/me", headers=auth_header(t))
     assert r.status_code == 200
@@ -10,9 +10,9 @@ def test_employee_can_view_own_payroll_null_or_set(create_user, get_token):
     assert r.json() is None or "net_salary" in r.json()
 
 def test_admin_can_create_and_update_payroll(create_user, get_token):
-    admin = create_user("ap@rev.com", "Aa123456", role="Admin")
-    emp = create_user("ep@rev.com", "Aa123456")
-    ta = get_token("ap@rev.com", "Aa123456")
+    admin = create_user("ap@rev.com", "Aa123456!", role="Admin")
+    emp = create_user("ep@rev.com", "Aa123456!")
+    ta = get_token("ap@rev.com", "Aa123456!")
 
     # Create via patch (upsert)
     r = client.patch(f"/api/payroll/admin/{emp.id}", json={
@@ -34,10 +34,10 @@ def test_admin_can_create_and_update_payroll(create_user, get_token):
     assert r2.json()["net_salary"] == 57000
 
 def test_admin_can_list_all_payrolls(create_user, get_token):
-    admin = create_user("alp@rev.com", "Aa123456", role="Admin")
-    e1 = create_user("e1p@rev.com", "Aa123456")
-    e2 = create_user("e2p@rev.com", "Aa123456")
-    ta = get_token("alp@rev.com", "Aa123456")
+    admin = create_user("alp@rev.com", "Aa123456!", role="Admin")
+    e1 = create_user("e1p@rev.com", "Aa123456!")
+    e2 = create_user("e2p@rev.com", "Aa123456!")
+    ta = get_token("alp@rev.com", "Aa123456!")
 
     client.patch(f"/api/payroll/admin/{e1.id}", json={"basic_salary": 30000, "allowances": 0, "deductions": 0}, headers=auth_header(ta))
     client.patch(f"/api/payroll/admin/{e2.id}", json={"basic_salary": 40000, "allowances": 0, "deductions": 0}, headers=auth_header(ta))
@@ -50,8 +50,8 @@ def test_admin_can_list_all_payrolls(create_user, get_token):
     assert "net_salary" in data[0]
 
 def test_employee_cannot_update_payroll(create_user, get_token):
-    emp = create_user("nope@rev.com", "Aa123456")
-    t = get_token("nope@rev.com", "Aa123456")
+    emp = create_user("nope@rev.com", "Aa123456!")
+    t = get_token("nope@rev.com", "Aa123456!")
 
     r = client.patch(f"/api/payroll/admin/{emp.id}", json={"basic_salary": 1, "allowances": 0, "deductions": 0}, headers=auth_header(t))
     assert r.status_code == 403

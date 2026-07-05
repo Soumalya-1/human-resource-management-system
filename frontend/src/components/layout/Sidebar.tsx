@@ -107,15 +107,6 @@ export function Sidebar({
           ))}
         </nav>
 
-        <div className="m-4 rounded-2xl bg-[var(--color-primary-soft)] p-4">
-          <p className="text-sm font-semibold text-foreground">Upgrade to Pro</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Unlock advanced analytics and payroll automation.
-          </p>
-          <button className="mt-3 w-full rounded-lg bg-primary py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-[var(--color-primary-hover)]">
-            Upgrade Now
-          </button>
-        </div>
       </aside>
     </>
   )

@@ -2,8 +2,8 @@ from tests.conftest import client, auth_header, create_user, get_token
 from datetime import date, timedelta
 
 def test_apply_leave_and_view(create_user, get_token):
-    emp = create_user("lv@rev.com", "Aa123456")
-    t = get_token("lv@rev.com", "Aa123456")
+    emp = create_user("lv@rev.com", "Aa123456!")
+    t = get_token("lv@rev.com", "Aa123456!")
 
     payload = {
         "leave_type": "Paid",
@@ -22,8 +22,8 @@ def test_apply_leave_and_view(create_user, get_token):
     assert len(my.json()) >= 1
 
 def test_leave_overlap_rejected(create_user, get_token):
-    emp = create_user("ov@rev.com", "Aa123456")
-    t = get_token("ov@rev.com", "Aa123456")
+    emp = create_user("ov@rev.com", "Aa123456!")
+    t = get_token("ov@rev.com", "Aa123456!")
 
     d1 = date.today() + timedelta(days=5)
     d2 = d1 + timedelta(days=1)
@@ -43,10 +43,10 @@ def test_leave_overlap_rejected(create_user, get_token):
     assert r2.status_code == 400
 
 def test_admin_approve_leave_marks_attendance(create_user, get_token):
-    admin = create_user("la@rev.com", "Aa123456", role="Admin")
-    emp = create_user("le@rev.com", "Aa123456")
-    ta = get_token("la@rev.com", "Aa123456")
-    te = get_token("le@rev.com", "Aa123456")
+    admin = create_user("la@rev.com", "Aa123456!", role="Admin")
+    emp = create_user("le@rev.com", "Aa123456!")
+    ta = get_token("la@rev.com", "Aa123456!")
+    te = get_token("le@rev.com", "Aa123456!")
 
     d1 = date.today() + timedelta(days=10)
     d2 = d1

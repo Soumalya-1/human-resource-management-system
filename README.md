@@ -4,190 +4,166 @@
 
 ### Every workday, perfectly aligned.
 
-A unified platform to digitize core HR operations — onboarding, attendance, leave, and payroll visibility — built for speed, clarity, and role-based control.
+A role-aware HR platform for attendance, leave, payroll, and employee management — built with **FastAPI + React/TypeScript**.
 
 </div>
 
 ## Overview
 
-**HRMS** is a role-based Human Resource Management System designed to replace scattered spreadsheets and manual approval chains with a single, secure, digital workflow. It covers the full employee lifecycle touchpoint set that most small-to-mid-sized teams actually need day-to-day: authentication, profile management, attendance tracking, leave requests, approvals, and payroll visibility — without the bloat of enterprise HR suites.
-
-## Problem Statement
-
-Most small and growing organizations still manage HR operations through a patchwork of spreadsheets, email threads, and verbal approvals. This leads to:
-
-- No single source of truth for employee data
-- Manual, error-prone attendance and leave tracking
-- Delayed or untracked approval workflows
-- Zero self-service visibility for employees into their own records
-- Payroll data that is hard to audit or update safely
-
-## Our Solution
-
-HRMS consolidates these scattered processes into one role-aware application with two clear personas — **Admin/HR Officer** and **Employee** — each seeing only what they need. Every action (leave applied, attendance marked, approval given) reflects instantly across the system, removing the lag and ambiguity of manual processes.
-
-## Key Features
-
-### Authentication & Authorization
-- Secure sign-up with Employee ID, email, password, and role selection (Employee / HR)
-- Enforced password strength rules and mandatory email verification
-- Sign-in with clear error handling on invalid credentials
-- Role-based redirection to the appropriate dashboard
-
-### Dashboards
-- **Employee Dashboard:** quick-access cards for Profile, Attendance, Leave Requests, and Logout, plus recent activity and alerts
-- **Admin/HR Dashboard:** full employee list, attendance records, leave approvals, and the ability to switch between employee views
-
-### Employee Profile Management
-- View personal details, job details, salary structure, documents, and profile picture
-- Employees can edit limited fields (address, phone, profile picture)
-- Admins can edit all employee details
-
-### Attendance Management
-- Daily and weekly attendance views
-- Employee check-in / check-out
-- Status tracking: Present, Absent, Half-day, Leave
-- Employees view only their own records; Admin/HR views all records
-
-### Leave & Time-Off Management
-- Apply for Paid, Sick, or Unpaid leave via a calendar-based date range picker
-- Add remarks; view a monthly calendar with Present/Absent markers
-- Status tracking: Pending, Approved, Rejected
-- Admin/HR can view, approve, reject, and comment on requests, with changes reflected instantly
-
-### Payroll / Salary Management
-- Read-only payroll view for employees
-- Admin can view all payroll data, update salary structures, and maintain payroll accuracy
-
-## User Roles
-
-| User Type | Description |
-|---|---|
-| **Admin / HR Officer** | Manages employees, approves leave and attendance, views and edits payroll details |
-| **Employee** | Views personal profile, tracks attendance, applies for leave, views salary details |
-
-## System Architecture
-
-The system follows a role-based access control (RBAC) model, separating Admin/HR and Employee flows at both the UI and permissions layer.
-
-> Wireframes and flow diagrams: [View on Excalidraw](https://link.excalidraw.com/l/65VNwvy7c4X/58RLEJ4oOwh)
-
-```
-┌─────────────────┐        ┌──────────────────┐        ┌─────────────────┐
-│   Client (Web)   │◄─────► │   API / Backend   │◄─────► │    Database      │
-│  React / Vue UI  │        │  Auth, RBAC,      │        │  Employees,      │
-│  Role-based views│        │  Business Logic   │        │  Attendance,     │
-└─────────────────┘        └──────────────────┘        │  Leave, Payroll  │
-                                                          └─────────────────┘
-```
+HRMS is a role-based system covering the full employee lifecycle: authentication, profile management, attendance tracking, leave workflows, approvals, and payroll visibility. Two clear personas — **Admin**, **HR Officer**, and **Employee** — each see only what they need.
 
 ## Tech Stack
 
-> Update this table with the stack actually used in your submission — the layout below is a suggested starting point for a project of this scope.
-
-| Layer | Suggested Technology |
+| Layer | Technology |
 |---|---|
-| Frontend | React.js / Tailwind CSS |
-| Backend | Node.js + Express (or Flask) |
-| Database | MongoDB / PostgreSQL |
-| Authentication | JWT + bcrypt |
-| Calendar / Attendance UI | FullCalendar.js |
-| Deployment | Vercel / Render / Railway |
-| Version Control | Git & GitHub |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS |
+| Backend | Python 3.13, FastAPI, SQLAlchemy 2.0 |
+| Database | SQLite (default) / PostgreSQL (via docker-compose) |
+| Auth | JWT (HS256) + bcrypt, role-based access control |
+| Testing | pytest, fastapi.testclient |
+| Infrastructure | Docker Compose (optional Postgres) |
 
-## SWOT Analysis
+## Features
 
-| Strengths | Weaknesses |
-|---|---|
-| Covers the full core HR loop (auth, profile, attendance, leave, payroll) in one system | Currently single-tenant; not yet built for multi-organization use |
-| Clear role-based separation reduces complexity and access risk | No native mobile app at this stage |
-| Calendar-based leave application improves usability over form-only flows | Payroll is visibility-only, not a full payroll processing engine |
-| Lightweight scope makes it fast to deploy and demo | Limited third-party integrations (no biometric devices, no external payroll gateways yet) |
+### Authentication & Security
+- Signup with auto-generated Employee ID (`REVE######`), strong password enforcement (8+ chars, uppercase, lowercase, digit, special char)
+- Login with JWT (includes `jti`, `iat`, `exp` claims)
+- Proper 401 on wrong credentials — no silent fallback
+- RBAC with three tiers: **Admin**, **HR**, **Employee**
 
-| Opportunities | Threats |
-|---|---|
-| Expand into a multi-tenant SaaS product for multiple organizations | Established players (Zoho People, BambooHR, Keka) dominate the market |
-| Add biometric or geo-fenced attendance for hybrid/field teams | Data privacy and compliance requirements (e.g., labor law, data protection) increase with scale |
-| Introduce AI-driven analytics (attrition prediction, leave pattern insights) | Employee trust depends heavily on data security guarantees |
-| Integrate with payroll gateways and accounting tools (Tally, QuickBooks) | User adoption resistance if migration from spreadsheets isn't well-supported |
+### Role-Based Access Control
+| Role | Permissions |
+|------|------------|
+| **Admin** | Full access: user management, payroll modification, leave approval, role changes |
+| **HR** | Can list users, view/approve leaves, view payroll. Cannot modify payroll or change user roles |
+| **Employee** | Own profile, check-in/out, apply leave, view own payslip |
 
-## Getting Started
+### Attendance
+- Check-in / check-out (server-UTC date, today only)
+- Cannot check out without checking in first
+- Weekly aggregate view
+- Privileged users see all records; employees see only their own
+- Leave approval automatically marks attendance as "Leave"
+
+### Leave Management
+- Apply for Paid, Sick, or Unpaid leave
+- Past-date leaves rejected (schema-enforced)
+- Overlapping leave detection (Pending/Approved leaves blocked)
+- Admin/HR approve/reject with attendance auto-marking
+- Un-approving a leave reverts attendance records
+
+### Payroll
+- Employee self-service view
+- Admin can set/modify salary (basic, allowances, deductions)
+- Validation: all fields ≥ 0, deductions ≤ salary + allowances
+- Joined eager-loading (no N+1 query)
+
+### API Security
+- All `db.commit()` calls wrapped in `try/except IntegrityError` → 400 response
+- `int(user_id)` from JWT wrapped in `try/except ValueError` → 401
+- SQLite foreign keys enforced via `PRAGMA foreign_keys=ON`
+- CORS configurable via `CORS_ORIGINS` env var
+- Password validation (schema-level `Literal` enums for role/leave_type/status)
+
+## Quick Start
 
 ### Prerequisites
-- Node.js (v18 or later)
-- npm or yarn
-- A running instance of your chosen database (MongoDB/PostgreSQL)
+- Python 3.13+
+- Node.js 18+
+- npm or pnpm
 
-### Installation
+### Backend
 
-```bash
-# Clone the repository
-git clone https://github.com/Soumalya-1/human-resource-management-system.git
-cd hrms
+```powershell
+# From project root
+$env:PYTHONPATH="backend"
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
-# Install dependencies
+### Frontend
+
+```powershell
+cd frontend
 npm install
-
-# Set up environment variables
-cp .env.example .env
-
-# Run the development server
 npm run dev
 ```
 
-### Environment Variables
+Open `http://localhost:5173`. The first signup becomes Admin automatically.
 
+### With PostgreSQL (optional)
+
+```powershell
+docker-compose up -d
+# Edit .env: DATABASE_URL=postgresql://hrms_user:hrms_pass@localhost:5432/hrms_db
+pip install psycopg2-binary
 ```
-DATABASE_URL=
-JWT_SECRET=
-EMAIL_SERVICE_API_KEY=
-PORT=5000
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `DATABASE_URL` | `sqlite:///./hrms.db` | Database connection string |
+| `JWT_SECRET_KEY` | `change-me-to-a-strong-random-secret` | JWT signing key (change in production) |
+| `ALGORITHM` | `HS256` | JWT algorithm |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `10080` | Token expiry (7 days) |
+| `CORS_ORIGINS` | `http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173` | Comma-separated allowed origins |
+| `VITE_API_URL` | `http://localhost:8000` | Backend URL (frontend only) |
+
+## Testing
+
+```powershell
+$env:PYTHONPATH="backend"
+pytest backend/tests -v
 ```
+
+23 tests covering auth, attendance, leaves, payroll, profile, and RBAC. All pass with zero deprecation warnings.
 
 ## Project Structure
 
 ```
 hrms/
-├── client/                 # Frontend application
+├── backend/
+│   ├── app/
+│   │   ├── routers/          # auth, users, attendance, leaves, payroll
+│   │   ├── auth.py           # JWT, password hashing, RBAC dependencies
+│   │   ├── config.py         # Pydantic settings (env vars)
+│   │   ├── database.py       # SQLAlchemy engine + session
+│   │   ├── models.py         # ORM models (User, Attendance, Leave, Payroll)
+│   │   ├── schemas.py        # Pydantic schemas with Literal/Field validators
+│   │   ├── utils.py          # ID generation, password rules, leave helpers
+│   │   └── main.py           # FastAPI app, CORS, router registration
+│   ├── tests/                # pytest suite (conftest + 7 test modules)
+│   └── requirements.txt
+├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── services/
-├── server/                 # Backend API
-│   ├── controllers/
-│   ├── models/
-│   ├── routes/
-│   └── middleware/
-├── docs/                   # SRS, diagrams, wireframes
-├── .env.example
-└── README.md
+│   │   ├── components/       # UI components (dashboard, employee, layout, ui)
+│   │   ├── pages/            # Login, Signup, AdminDashboard, EmployeeDashboard
+│   │   └── lib/api.ts        # API client with network-error-only mock fallback
+│   ├── public/               # Static assets
+│   └── package.json
+├── docker-compose.yml        # Postgres + backend + frontend
+├── .pre-commit-config.yaml
+└── AGENTS.md                 # Detailed reference for AI coding agents
 ```
 
-## Roadmap
+## Design Principles
 
-- [ ] Mobile-responsive PWA support
-- [ ] Biometric/geo-fenced attendance integration
-- [ ] Automated payroll processing with payslip generation
-- [ ] AI-based leave pattern and attrition analytics
-- [ ] Multi-tenant support for multiple organizations
-- [ ] Notification system (email/push) for approvals and alerts
+- **No silent failures**: API errors (401, 400, 422, 403) propagate to the UI. Mock fallback activates only on actual network errors (backend unreachable), with a visible amber banner.
+- **Data integrity**: No partial commits — `mark_attendance_as_leave` does not commit internally. Un-approving a leave reverts attendance changes.
+- **Defense in depth**: Schema-level `Literal` enums, Pydantic validators, DB-level FK constraints (SQLite via PRAGMA), and wrapped commits.
+- **Tested**: 23 tests, all pass. Verified E2E flows for signup, login, attendance, leaves, payroll, RBAC, and edge cases (past-dates, negative salaries, invalid roles, weak passwords).
 
-## Why This Project Stands Out
+## Limitations
 
-- **Complete lifecycle coverage:** most hackathon HR tools solve one slice (attendance-only, leave-only); this covers auth through payroll visibility in a single coherent system.
-- **Real RBAC, not a toggle:** Admin and Employee are genuinely separate experiences, not the same screen with hidden buttons.
-- **Grounded in a written SRS:** every feature traces back to a documented functional requirement, not an improvised feature list.
-- **Immediate real-world applicability:** solves a problem every small organization actually has, with a clear path to a monetizable SaaS product.
-
+- No DB migrations (schema rebuilt on startup)
+- No file upload endpoints (profile_picture is a URL string)
+- No email verification or password reset flows
+- No rate limiting on auth endpoints
+- No audit log / notification endpoints
+- Single-tenant (no multi-organization support)
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
-
----
-
-<div align="center">
-
-**If this project helped or inspired you, consider giving it a star.**
-
-</div>
+MIT

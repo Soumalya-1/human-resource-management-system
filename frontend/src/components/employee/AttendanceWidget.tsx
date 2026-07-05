@@ -4,12 +4,6 @@ import { Card, CardHeader } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { checkIn, checkOut } from "@/lib/api"
 
-const statusStyles = {
-  present: "bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent",
-  remote: "bg-sky-100 text-[var(--color-accent)] border-transparent",
-  today: "bg-[var(--color-primary-soft)] text-primary border-primary/30",
-}
-
 export function AttendanceWidget() {
   const [today, setToday] = useState({ checkedIn: false, hours: "0h 00m" })
   const [loading, setLoading] = useState(false)
@@ -21,9 +15,9 @@ export function AttendanceWidget() {
     try {
       await checkIn()
       setToday({ checkedIn: true, hours: "0h 01m" })
-      setMsg("Checked in (live or mock)")
-    } catch (e: any) {
-      setMsg(e?.message || "Check-in failed")
+      setMsg("Checked in")
+    } catch (err: unknown) {
+      setMsg(err instanceof Error ? err.message : "Check-in failed")
     } finally {
       setLoading(false)
     }
@@ -35,9 +29,9 @@ export function AttendanceWidget() {
     try {
       await checkOut()
       setToday({ checkedIn: false, hours: "8h 05m" })
-      setMsg("Checked out (live or mock)")
-    } catch (e: any) {
-      setMsg(e?.message || "Check-out failed")
+      setMsg("Checked out")
+    } catch (err: unknown) {
+      setMsg(err instanceof Error ? err.message : "Check-out failed")
     } finally {
       setLoading(false)
     }
@@ -47,7 +41,7 @@ export function AttendanceWidget() {
     <Card hover className="h-full">
       <CardHeader
         title="Attendance"
-        subtitle="This week"
+        subtitle="Today"
         action={
           !today.checkedIn ? (
             <Button size="sm" onClick={doCheckIn} disabled={loading}>
@@ -69,28 +63,14 @@ export function AttendanceWidget() {
           </span>
           <div>
             <p className="text-sm text-muted-foreground">
-              {today.checkedIn ? "Checked in today" : "Last check-out"}
+              {today.checkedIn ? "Checked in today" : "Not checked in yet"}
             </p>
             <p className="text-lg font-semibold text-foreground">
-              {today.checkedIn ? "Just now" : "Earlier"} · {today.hours}
+              {today.checkedIn ? "Just now" : "—"} · {today.hours}
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-5 gap-2">
-          {[
-            { day: "Mon", status: "present", hours: "8h 10m" },
-            { day: "Tue", status: "present", hours: "8h 02m" },
-            { day: "Wed", status: "remote", hours: "7h 50m" },
-            { day: "Thu", status: "present", hours: "8h 15m" },
-            { day: "Fri", status: "today", hours: today.hours },
-          ].map((d, idx) => (
-            <div key={idx} className={"rounded-xl border p-2.5 text-center " + (statusStyles as any)[d.status]}>
-              <p className="text-xs font-semibold">{d.day}</p>
-              <p className="mt-1 text-[10px] font-medium opacity-80">{d.hours}</p>
-            </div>
-          ))}
-        </div>
-        {msg && <p className="mt-3 text-xs text-muted-foreground">{msg}</p>}
+        {msg && <p className="text-xs text-muted-foreground">{msg}</p>}
       </div>
     </Card>
   )

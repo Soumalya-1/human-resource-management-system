@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta, date as date_cls
+from datetime import datetime, timedelta, date as date_cls, timezone
 from typing import List
 
 from app import models
@@ -11,7 +11,7 @@ from app.utils import is_privileged
 router = APIRouter(prefix="/api/attendance", tags=["Attendance"])
 
 def _today():
-    return datetime.utcnow().date()
+    return datetime.now(timezone.utc).date()
 
 @router.post("/check-in")
 def check_in(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
@@ -27,7 +27,7 @@ def check_in(db: Session = Depends(get_db), current_user: models.User = Depends(
     new_att = models.Attendance(
         user_id=current_user.id,
         date=today,
-        check_in=datetime.utcnow(),
+        check_in=datetime.now(timezone.utc),
         status="Present"
     )
     db.add(new_att)
@@ -45,7 +45,10 @@ def check_out(db: Session = Depends(get_db), current_user: models.User = Depends
     if not attendance or attendance.check_out:
         raise HTTPException(status_code=400, detail="Not checked in or already checked out")
 
-    attendance.check_out = datetime.utcnow()
+    if not attendance.check_in:
+        raise HTTPException(status_code=400, detail="Must check in before checking out")
+
+    attendance.check_out = datetime.now(timezone.utc)
     if attendance.status not in ("Half-day", "Leave"):
         attendance.status = "Present"
     db.commit()

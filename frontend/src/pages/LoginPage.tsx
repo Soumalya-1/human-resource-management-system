@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react"
+import { useState, type FormEvent, type ChangeEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { User, Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react"
+import { User, Lock, Eye, EyeOff, ArrowRight, WifiOff } from "lucide-react"
 import { AuthLayout } from "@/components/auth/AuthLayout"
 import { Input } from "@/components/ui/Input"
 import { Button } from "@/components/ui/Button"
@@ -10,31 +10,41 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [role, setRole] = useState<"admin" | "employee">("admin")
-  const [email, setEmail] = useState("demo@nimbus.co")
-  const [password, setPassword] = useState("Aa123456")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isOffline, setIsOffline] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    setIsOffline(false)
     setLoading(true)
     try {
       const res = await login(email, password, role)
-      // Navigate based on returned role or chosen role (fallback to chosen)
       const targetRole = (res.role || role) === "admin" ? "admin" : "employee"
       navigate(targetRole === "admin" ? "/admin" : "/employee")
-    } catch (err: any) {
-      setError(err?.message || "Login failed. Using demo mode.")
-      // Still allow demo navigation
-      navigate(role === "admin" ? "/admin" : "/employee")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Login failed"
+      if (err instanceof TypeError || msg.includes("Failed to fetch")) {
+        setIsOffline(true)
+        setError("Backend unreachable. Running in offline demo mode.")
+        const { mockLogin, mockGetProfile } = await import("@/lib/api")
+        await mockLogin(email, password, role)
+        const profile = await mockGetProfile()
+        const targetRole = profile?.role?.toLowerCase().includes("admin") ? "admin" : "employee"
+        navigate(targetRole === "admin" ? "/admin" : "/employee")
+      } else {
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AuthLayout heading="Welcome back" subheading="Sign in to your Nimbus HR workspace to continue.">
+    <AuthLayout heading="Welcome back" subheading="Sign in to your HR workspace to continue.">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
           {(["admin", "employee"] as const).map((r) => (
@@ -61,7 +71,7 @@ export default function LoginPage() {
           placeholder="you@nimbus.co"
           icon={<User className="h-4 w-4" />}
           value={email}
-          onChange={(e: any) => setEmail(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
           required
         />
 
@@ -72,7 +82,7 @@ export default function LoginPage() {
           placeholder="Enter your password"
           icon={<Lock className="h-4 w-4" />}
           value={password}
-          onChange={(e: any) => setPassword(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           required
         />
 
@@ -81,9 +91,6 @@ export default function LoginPage() {
             <input type="checkbox" className="h-4 w-4 rounded border-input accent-[var(--color-primary)]" />
             Remember me
           </label>
-          <button type="button" className="text-sm font-medium text-primary hover:underline">
-            Forgot password?
-          </button>
         </div>
 
         {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
@@ -93,10 +100,12 @@ export default function LoginPage() {
           <ArrowRight className="h-4 w-4" />
         </Button>
 
-        <div className="flex items-center gap-2 rounded-xl bg-[var(--color-primary-soft)] p-3 text-xs text-primary">
-          <ShieldCheck className="h-4 w-4 shrink-0" />
-          Works with real backend or demo mode (any password).
-        </div>
+        {isOffline && (
+          <div className="flex items-center gap-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-700">
+            <WifiOff className="h-4 w-4 shrink-0" />
+            Offline mode — data is not persisted.
+          </div>
+        )}
       </form>
 
       <p className="mt-8 text-center text-sm text-muted-foreground">

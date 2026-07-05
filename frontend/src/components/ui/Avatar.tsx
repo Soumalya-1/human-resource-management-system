@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { cn } from "@/lib/utils"
 
 const sizes = {
@@ -27,16 +28,34 @@ function initials(name: string) {
 }
 
 export function Avatar({
+  src,
   name,
   size = "md",
   className,
 }: {
-  src?: string
+  src?: string | null
   name: string
   size?: keyof typeof sizes
   className?: string
 }) {
+  const [imgError, setImgError] = useState(false)
   const colorIndex = name.charCodeAt(0) % palette.length
+
+  if (src && !imgError) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        onError={() => setImgError(true)}
+        className={cn(
+          "shrink-0 rounded-full object-cover ring-2 ring-card",
+          sizes[size],
+          className,
+        )}
+      />
+    )
+  }
+
   return (
     <span
       className={cn(

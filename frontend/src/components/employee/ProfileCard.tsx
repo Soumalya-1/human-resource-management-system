@@ -3,9 +3,18 @@ import { Card } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
 import { Avatar } from "@/components/ui/Avatar"
 
-// Accept the 'user' prop from the dashboard
-export function ProfileCard({ user }: { user: any }) {
-  // Map the real FastAPI data
+interface UserProfile {
+  name?: string | null
+  email?: string | null
+  phone?: string | null
+  address?: string | null
+  employee_id?: string | null
+  job_title?: string | null
+  role?: string | null
+  profile_picture?: string | null
+}
+
+export function ProfileCard({ user }: { user?: UserProfile | null }) {
   const rows = [
     { icon: Mail, label: "Email", value: user?.email || "N/A" },
     { icon: Phone, label: "Phone", value: user?.phone || "Not provided" },
@@ -19,7 +28,7 @@ export function ProfileCard({ user }: { user: any }) {
       <div className="px-5 pb-5">
         <div className="-mt-10 flex items-end gap-4">
           <Avatar
-            src={user?.profile_picture}
+            src={user?.profile_picture || undefined}
             name={user?.name || "User"}
             size="xl"
             className="ring-4 ring-card bg-white"
@@ -34,7 +43,7 @@ export function ProfileCard({ user }: { user: any }) {
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Building2 className="h-3.5 w-3.5" />
-              HQ Office
+              {user?.address || "N/A"}
             </span>
             <span className="text-border">·</span>
             <span>ID: {user?.employee_id}</span>

@@ -48,7 +48,7 @@ export function AuthLayout({
         </div>
 
         <p className="relative text-sm text-primary-foreground/70">
-          © 2026 Nimbus HR. Crafted for modern teams.
+          © {new Date().getFullYear()} Nimbus HR. Crafted for modern teams.
         </p>
       </div>
 

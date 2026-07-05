@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from datetime import date
 
 from app import models, schemas, auth
 from app.database import get_db
-from app.utils import is_privileged, has_overlapping_leave, mark_attendance_as_leave
+from app.utils import is_privileged, has_overlapping_leave, mark_attendance_as_leave, revert_attendance_from_leave
 
 router = APIRouter(prefix="/api/leaves", tags=["Leave"])
 
@@ -18,7 +19,11 @@ def apply_leave(leave: schemas.LeaveApply, db: Session = Depends(get_db), curren
 
     new_leave = models.Leave(**leave.model_dump(), user_id=current_user.id)
     db.add(new_leave)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not create leave request")
     db.refresh(new_leave)
     return new_leave
 
@@ -34,12 +39,18 @@ def update_leave_status(leave_id: int, status_data: schemas.LeaveStatusUpdate, d
     if not leave:
         raise HTTPException(status_code=404, detail="Leave request not found")
 
+    old_status = leave.status
     leave.status = status_data.status
     leave.admin_comments = status_data.admin_comments
 
-    if status_data.status == "Approved":
-        # Reflect in attendance records immediately
+    if status_data.status == "Approved" and old_status != "Approved":
         mark_attendance_as_leave(db, leave.user_id, leave.start_date, leave.end_date)
+    elif old_status == "Approved" and status_data.status != "Approved":
+        revert_attendance_from_leave(db, leave.user_id, leave.start_date, leave.end_date)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Could not update leave status")
     return {"message": f"Leave {status_data.status.lower()}"}

@@ -1,10 +1,58 @@
+import { useState, useEffect } from "react"
 import { Card, CardHeader } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
-import { attendanceSummary, attendanceBreakdown } from "@/data/hrms"
+
+interface AttendanceRow {
+  date: string
+  status: string
+  user_id: number
+}
 
 export function AttendanceSummary() {
-  const max = Math.max(...attendanceSummary.map((d) => d.present))
-  const totalTracked = attendanceBreakdown.reduce((sum, b) => sum + b.value, 0)
+  const [summary, setSummary] = useState<{ day: string; present: number }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const { getAuthToken } = await import("@/lib/api")
+        const token = getAuthToken()
+        if (!token) { if (!cancelled) setLoading(false); return }
+
+        const res = await fetch(`/api/attendance/weekly`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          const data: AttendanceRow[] = await res.json()
+          const dayMap: Record<string, number> = {}
+          const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+          data.forEach((row) => {
+            const d = new Date(row.date)
+            const dayLabel = dayNames[d.getDay() === 0 ? 6 : d.getDay() - 1]
+            dayMap[dayLabel] = (dayMap[dayLabel] || 0) + 1
+          })
+          const result = dayNames.map((day) => ({ day, present: dayMap[day] || 0 }))
+          if (!cancelled) setSummary(result)
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
+  if (loading) return (
+    <Card hover className="h-full">
+      <CardHeader title="Attendance Summary" subtitle="This week" action={<Badge tone="success">Live</Badge>} />
+      <div className="p-5 text-center text-sm text-muted-foreground">Loading...</div>
+    </Card>
+  )
+
+  const max = Math.max(...summary.map((d) => d.present), 1)
 
   return (
     <Card hover className="h-full">
@@ -15,7 +63,7 @@ export function AttendanceSummary() {
       />
       <div className="px-5 pb-5">
         <div className="flex h-40 justify-between gap-2 sm:gap-3">
-          {attendanceSummary.map((d) => (
+          {summary.map((d) => (
             <div key={d.day} className="flex h-full flex-1 flex-col items-center gap-2">
               <div className="flex h-full w-full items-end">
                 <div
@@ -25,20 +73,6 @@ export function AttendanceSummary() {
                 />
               </div>
               <span className="text-xs font-medium text-muted-foreground">{d.day}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4">
-          {attendanceBreakdown.map((b) => (
-            <div key={b.label}>
-              <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: b.color }} />
-                <span className="text-xs text-muted-foreground">{b.label}</span>
-              </div>
-              <p className="mt-1 text-lg font-semibold text-foreground">
-                {Math.round((b.value / totalTracked) * 100)}%
-              </p>
             </div>
           ))}
         </div>

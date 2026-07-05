@@ -1,7 +1,3 @@
-// Lightweight API client for HRMS frontend
-// - Uses real backend when available (http://localhost:8000 by default)
-// - Falls back to in-memory mock data so the UI works end-to-end in demo mode
-
 const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
 
 let authToken: string | null = localStorage.getItem('hrms_token');
@@ -16,8 +12,12 @@ export function getAuthToken() {
   return authToken;
 }
 
+function isNetworkError(err: unknown): boolean {
+  return err instanceof TypeError || ((err as Error)?.message?.includes('Failed to fetch'));
+}
+
 async function request(path: string, options: RequestInit = {}) {
-  const headers: any = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(options.headers as Record<string, string> || {}) };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -33,10 +33,9 @@ async function request(path: string, options: RequestInit = {}) {
   return ct.includes('application/json') ? res.json() : res.text();
 }
 
-// --- Real API calls (best effort) ---
+// --- Real API calls ---
 
 export async function apiLogin(email: string, password: string) {
-  // Backend login expects form data with username=email
   const form = new URLSearchParams();
   form.append('username', email);
   form.append('password', password);
@@ -81,19 +80,38 @@ export async function apiApplyLeave(payload: { leave_type: string; start_date: s
   });
 }
 
-// --- Mock fallback layer (used when backend is unreachable) ---
+export async function apiGetUsers() {
+  return request('/api/admin/users');
+}
 
-const mockState = {
+export async function apiGetLeaves() {
+  return request('/api/leaves/');
+}
+
+export async function apiApproveLeave(leaveId: number, status: string, adminComments?: string) {
+  return request(`/api/leaves/admin/${leaveId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status, admin_comments: adminComments || null }),
+  });
+}
+
+// --- Mock fallback (only when backend is unreachable) ---
+
+const mockState: {
+  isLoggedIn: boolean;
+  role: 'admin' | 'employee';
+  user: { name: string; role: string; employee_id: string };
+  attendance: { checkedIn: boolean; todayHours: string };
+  leaves: Array<{ id: string; status: string; [key: string]: unknown }>;
+} = {
   isLoggedIn: false,
-  role: 'employee' as 'admin' | 'employee',
+  role: 'employee',
   user: { name: 'Demo User', role: 'Employee', employee_id: 'REVE000042' },
   attendance: { checkedIn: false, todayHours: '0h 00m' },
-  leaves: [] as any[],
+  leaves: [],
 };
 
-export async function mockLogin(email: string, password: string, chosenRole: 'admin' | 'employee') {
-  // Accept any non-empty password for demo
-  if (!password) throw new Error('Password required');
+export async function mockLogin(email: string, _password: string, chosenRole: 'admin' | 'employee') {
   mockState.isLoggedIn = true;
   mockState.role = chosenRole;
   mockState.user = {
@@ -126,7 +144,7 @@ export async function mockCheckOut() {
   return { message: 'Check-out successful (mock)' };
 }
 
-export async function mockApplyLeave(payload: any) {
+export async function mockApplyLeave(payload: Record<string, unknown>) {
   const item = { id: 'L' + Date.now(), ...payload, status: 'Pending' };
   mockState.leaves.unshift(item);
   return item;
@@ -137,46 +155,59 @@ export async function mockApplyLeave(payload: any) {
 export async function login(email: string, password: string, chosenRole: 'admin' | 'employee') {
   try {
     await apiLogin(email, password);
-    // If real login worked, fetch profile to know the role
     const profile = await apiGetProfile().catch(() => null);
     return { ok: true, role: profile?.role?.toLowerCase().includes('admin') ? 'admin' : 'employee', profile };
-  } catch {
-    // Fallback to mock
-    await mockLogin(email, password, chosenRole);
-    return { ok: true, role: chosenRole, profile: await mockGetProfile() };
+  } catch (err) {
+    if (isNetworkError(err)) {
+      await mockLogin(email, password, chosenRole);
+      return { ok: true, role: chosenRole, profile: await mockGetProfile() };
+    }
+    throw err;
   }
 }
 
 export async function getProfile() {
-  try { return await apiGetProfile(); } catch { return await mockGetProfile(); }
+  try { return await apiGetProfile(); } catch (err) {
+    if (isNetworkError(err)) return await mockGetProfile();
+    throw err;
+  }
 }
 
 export async function checkIn() {
-  try { return await apiCheckIn(); } catch { return await mockCheckIn(); }
+  try { return await apiCheckIn(); } catch (err) {
+    if (isNetworkError(err)) return await mockCheckIn();
+    throw err;
+  }
 }
 
 export async function checkOut() {
-  try { return await apiCheckOut(); } catch { return await mockCheckOut(); }
+  try { return await apiCheckOut(); } catch (err) {
+    if (isNetworkError(err)) return await mockCheckOut();
+    throw err;
+  }
 }
 
-export async function applyLeave(payload: any) {
-  try { return await apiApplyLeave(payload); } catch { return await mockApplyLeave(payload); }
-}
-
-// Add these to the bottom of frontend/src/lib/api.ts
-
-export async function apiGetUsers() {
-  return request('/api/admin/users');
+export async function applyLeave(payload: { leave_type: string; start_date: string; end_date: string; remarks?: string }) {
+  try { return await apiApplyLeave(payload); } catch (err) {
+    if (isNetworkError(err)) return await mockApplyLeave(payload);
+    throw err;
+  }
 }
 
 export async function getUsers() {
-  try {
-    return await apiGetUsers();
-  } catch {
-    // Fallback mock users if backend is ever disconnected
-    return [
-      { id: 1, employee_id: "REVE000001", name: "Sofia Rossi", job_title: "Product Designer", email: "sofia@nimbus.co", role: "HR" },
-      { id: 2, employee_id: "REVE000002", name: "James Whitfield", job_title: "Backend Engineer", email: "james@nimbus.co", role: "Employee" }
-    ];
+  try { return await apiGetUsers(); } catch (err) {
+    if (isNetworkError(err)) return [];
+    throw err;
   }
+}
+
+export async function getLeaves() {
+  try { return await apiGetLeaves(); } catch (err) {
+    if (isNetworkError(err)) return [];
+    throw err;
+  }
+}
+
+export async function approveLeave(leaveId: number, status: string, adminComments?: string) {
+  return await apiApproveLeave(leaveId, status, adminComments);
 }

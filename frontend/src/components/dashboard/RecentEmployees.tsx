@@ -2,7 +2,18 @@ import { Card, CardHeader } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
 import { Avatar } from "@/components/ui/Avatar"
 
-export function RecentEmployees({ employees }: { employees: any[] }) {
+interface EmployeeSummary {
+  id: number
+  employee_id?: string
+  name?: string | null
+  email?: string
+  job_title?: string | null
+  role: string
+  profile_picture?: string | null
+  [key: string]: unknown
+}
+
+export function RecentEmployees({ employees }: { employees: EmployeeSummary[] }) {
   return (
     <Card hover>
       <CardHeader

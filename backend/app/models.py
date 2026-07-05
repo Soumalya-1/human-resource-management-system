@@ -10,7 +10,7 @@ class User(Base):
     employee_id = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(String, default="Employee")  # "Employee" or "Admin"
+    role = Column(String, default="Employee")  # "Employee", "HR", or "Admin"
     verified = Column(Boolean, default=True)
 
     # Profile Details

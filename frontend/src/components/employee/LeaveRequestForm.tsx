@@ -23,12 +23,12 @@ export function LeaveRequestForm() {
         end_date: end,
         remarks: remarks || undefined,
       })
-      setResult("Leave request submitted (live or mock).")
+      setResult("Leave request submitted.")
       setStart("")
       setEnd("")
       setRemarks("")
-    } catch (e: any) {
-      setResult(e?.message || "Failed to submit (demo mode ok).")
+    } catch (err: unknown) {
+      setResult(err instanceof Error ? err.message : "Failed to submit")
     } finally {
       setLoading(false)
     }

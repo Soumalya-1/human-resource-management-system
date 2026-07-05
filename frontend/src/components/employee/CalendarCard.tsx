@@ -1,37 +1,29 @@
+import { useMemo } from "react"
 import { Card, CardHeader } from "@/components/ui/Card"
-import { calendarEvents } from "@/data/hrms"
 import { cn } from "@/lib/utils"
 
 const dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
-const eventColors = {
-  leave: "bg-[var(--color-warning)]",
-  holiday: "bg-[var(--color-danger)]",
-  meeting: "bg-primary",
-}
 
 export function CalendarCard() {
-  // July 2026 starts on a Wednesday (offset 3), 31 days
-  const daysInMonth = 31
-  const startOffset = 3
-  const today = 4
-  const cells = [...Array(startOffset).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
+  const { year, month, daysInMonth, startOffset, today } = useMemo(() => {
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = now.toLocaleString("default", { month: "long", year: "numeric" })
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+    const offset = firstDay.getDay()
+    const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    const day = now.getDate()
+    return { year: y, month: m, daysInMonth: days, startOffset: offset, today: day }
+  }, [])
+
+  const cells = useMemo(
+    () => [...Array(startOffset).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)],
+    [startOffset, daysInMonth]
+  )
 
   return (
     <Card hover className="h-full">
-      <CardHeader
-        title="July 2026"
-        subtitle="Team calendar"
-        action={
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-primary" /> Meeting
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-[var(--color-warning)]" /> Leave
-            </span>
-          </div>
-        }
-      />
+      <CardHeader title={month} subtitle="Team calendar" />
       <div className="p-5 pt-1">
         <div className="grid grid-cols-7 gap-1 text-center">
           {dayLabels.map((d, i) => (
@@ -41,7 +33,6 @@ export function CalendarCard() {
           ))}
           {cells.map((day, i) => {
             if (day === null) return <div key={`e-${i}`} />
-            const event = calendarEvents[day]
             const isToday = day === today
             return (
               <div
@@ -54,9 +45,6 @@ export function CalendarCard() {
                 )}
               >
                 {day}
-                {event && !isToday && (
-                  <span className={cn("absolute bottom-1 h-1 w-1 rounded-full", eventColors[event])} />
-                )}
               </div>
             )
           })}

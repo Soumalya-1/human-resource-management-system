@@ -1,10 +1,18 @@
 import { Bell } from "lucide-react"
 import { Card, CardHeader } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
-import { notifications } from "@/data/hrms"
 
-export function Notifications() {
+interface NotificationItem {
+  id: string
+  title: string
+  detail: string
+  unread: boolean
+}
+
+export function Notifications({ items }: { items?: NotificationItem[] }) {
+  const notifications = items || []
   const unread = notifications.filter((n) => n.unread).length
+
   return (
     <Card hover className="h-full">
       <CardHeader
@@ -13,6 +21,11 @@ export function Notifications() {
         action={unread > 0 ? <Badge tone="primary">{unread} new</Badge> : undefined}
       />
       <div className="space-y-1 px-2 pb-3">
+        {notifications.length === 0 && (
+          <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+            No new notifications
+          </div>
+        )}
         {notifications.map((n) => (
           <div key={n.id} className="flex gap-3 rounded-xl p-3 transition-colors hover:bg-muted">
             <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-primary">
